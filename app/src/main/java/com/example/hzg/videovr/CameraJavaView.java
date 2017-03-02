@@ -4,6 +4,7 @@ import android.content.Context;
 import android.hardware.Camera;
 import android.util.AttributeSet;
 
+import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.JavaCameraView;
 import org.opencv.core.Size;
 import org.opencv.videoio.VideoCapture;
@@ -18,6 +19,7 @@ import java.util.List;
 public class CameraJavaView extends JavaCameraView {
  private  Context mcontext;
     private String TAG="CameraJavaView";
+    private static final int MAX_UNSPECIFIED = -1;
     public CameraJavaView(Context context, AttributeSet attrs) {
         super(context, attrs);
         mcontext=context;
@@ -39,4 +41,35 @@ public class CameraJavaView extends JavaCameraView {
 
     }
 
+    @Override
+    protected Size calculateCameraFrameSize(List<?> supportedSizes, ListItemAccessor accessor, int surfaceWidth, int surfaceHeight) {
+
+        int calcWidth = 0;
+        int calcHeight = 0;
+
+        int maxAllowedWidth = (mMaxWidth != MAX_UNSPECIFIED && mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
+        int maxAllowedHeight = (mMaxHeight != MAX_UNSPECIFIED && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
+
+        for (Object size : supportedSizes) {
+            int width = accessor.getWidth(size);
+            int height = accessor.getHeight(size);
+
+            //if (width <= maxAllowedWidth && height <= maxAllowedHeight)
+            if (width <= maxAllowedHeight && height <= maxAllowedWidth)
+            {
+                if (width >= calcWidth && height >= calcHeight) {
+                    calcWidth = (int) width;
+                    calcHeight = (int) height;
+                }
+            }
+        }
+
+        return new Size(calcWidth, calcHeight);
+
+    }
+
+    @Override
+    protected void AllocateCache() {
+        super.AllocateCache();
+    }
 }

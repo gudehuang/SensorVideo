@@ -3,6 +3,7 @@ package com.example.hzg.videovr;
 import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -30,7 +31,10 @@ import org.opencv.android.CameraBridgeViewBase;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
 import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
+import org.opencv.core.Range;
+import org.opencv.core.Rect;
 import org.opencv.core.Size;
 import org.opencv.videoio.VideoWriter;
 
@@ -41,32 +45,28 @@ import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
 
 import static com.example.hzg.videovr.myUtils.showFilesDialog;
 
 public class MainActivity extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2
         , SensorEventListener, View.OnClickListener {
-    private CameraJavaView cameraview;
-    private String TAG = "MainActivity1";
+    private CameraBridgeViewBase cameraview;
+    private String TAG = "MainActivity";
     private String sensorTextFomart = "方位角：%s\n仰俯角：%s\n横滚角：%s";
     private String dataDir = Environment.getExternalStorageDirectory().getPath() + "/360video";
     private final int SHOW_SENSOR_TEXT = 0x001;
     private final int CANCEL_PROGRESSDIALOG = 0x002;
-    private boolean isStart = false, isRecord = false, isRecordSensor = false;
-    private float dataY, dataZ;
-    private float dataX;
+    private boolean isStart = false, isRecord = false;
+    private int dataX;
+    private int countk;
     private TextView sensorTv;
-    private Button startBtn, showBtn;
+    private Button startBtn, starBtn1;
     private SensorManager sensorManager;
     private ProgressDialog progressDialog;
-    private VideoWriter videoWriter;
     private Size framesize;
-    private int i = 0;
-    private Mat matTemp;
-    private Thread writerThread;
-    private ArrayList<Mat> MatData = new ArrayList<>();
-    private ArrayList<Mat> cacheMatData=new ArrayList<>() ;
-    private ArrayList<Mat> tempMatData ;
+    private String filename;
+    private  VideoRecoder videoRecoder;
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -97,10 +97,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         }
     };
-    private ArrayList<Float> sensorData;
-    private String filename;
-    private boolean isWriteImmediately = false;
-    private int k=0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -111,18 +108,19 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
         }
-        cameraview = (CameraJavaView) findViewById(R.id.javacameraview);
+        cameraview = (CameraBridgeViewBase) findViewById(R.id.javacameraview);
         cameraview.setVisibility(SurfaceView.VISIBLE);
         cameraview.setCvCameraViewListener(this);
         init();
+
     }
 
     private void init() {
         sensorTv = (TextView) findViewById(R.id.sensor_text);
         startBtn = (Button) findViewById(R.id.start_btn);
-        showBtn = (Button) findViewById(R.id.show_btn);
+        starBtn1 = (Button) findViewById(R.id.show_btn);
         startBtn.setOnClickListener(this);
-        showBtn.setOnClickListener(this);
+        starBtn1.setOnClickListener(this);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 2);
@@ -169,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
         if (cameraview != null) {
             cameraview.disableView();
         }
+        videoRecoder=null;
     }
 
     @Override
@@ -186,39 +185,16 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
     @Override
     public Mat onCameraFrame(CameraBridgeViewBase.CvCameraViewFrame inputFrame) {
         Mat mRgba = inputFrame.rgba();
-        // Core.flip(mRgba,mRgba,1); //flip（源文件，目标文件，0/1/-1）0表示绕x轴翻转。1绕y轴，-1绕x、y轴
-        Core.transpose(mRgba, mRgba);//transpose（src,targe） 将目标倒转 如840*480变为480*840
-        Core.flip(mRgba, mRgba, 1);
+//        // Core.flip(mRgba,mRgba,1); //flip（源文件，目标文件，0/1/-1）0表示绕x轴翻转。1绕y轴，-1绕x、y轴
+//        Core.transpose(mRgba, mRgba);//transpose（src,targe） 将目标倒转 如840*480变为480*840
+//        Core.flip(mRgba, mRgba, 1);
         if (isStart) {
-            if (videoWriter.isOpened()) {
-                sensorData.add(dataX);
-                if (isWriteImmediately)
-                    videoWriter.write(mRgba);
-                else {
-                    MatData.add(mRgba.clone());
-                    Log.d("read",""+i++);
-//                    if (isRecord&&MatData.size()>20) {
-//                        isRecord=false;
-//                        cacheMatData=MatData;
-//                        MatData=new ArrayList<>();
-//                        Log.d("swap",MatData+"#"+cacheMatData);
-//                        new Thread(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                for (Mat mat:cacheMatData) {
-//                                    videoWriter.write(mat);
-//                                    Log.d("write",""+k++);
-//                                }
-//                                cacheMatData.clear();
-//                                cacheMatData=null;
-//                                isRecord=true;
-//                            }
-//                        }).start();
-//                    }
-                }
+            if (isRecord&&videoRecoder.isOpened()) {
+                videoRecoder.write(mRgba,dataX);
+                isRecord=false;
             }
-
         }
+
         return mRgba;
     }
 
@@ -230,7 +206,12 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
                 message.what = SHOW_SENSOR_TEXT;
                 message.obj = sensorEvent.values;
                 handler.sendMessage(message);
-                dataX = sensorEvent.values[0];
+                int x= (int) sensorEvent.values[0];
+                if(isStart&&!isRecord&&!videoRecoder.contains(x)) {
+                    dataX = x;
+                    isRecord=true;
+                    Log.d("test",""+countk++);
+                }
                 break;
         }
     }
@@ -242,7 +223,8 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        menu.add(0, 100, 0, "查看-图片").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menu.add(0, 100, 0, "查看-图片(list)").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
+        menu.add(0, 300, 0, "查看-图片(set)").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
         menu.add(0, 200, 0, "查看-视频").setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS);
 
         return super.onCreateOptionsMenu(menu);
@@ -253,13 +235,14 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         switch (item.getItemId()) {
             case 100:
-                showFilesDialog(this, dataDir, ListAct.class);
+                showFilesDialog(this, dataDir,"list" ,ListAct.class);
                 break;
             case 200:
-                showFilesDialog(this, dataDir, VideoAct.class);
+                showFilesDialog(this, dataDir, "",VideoAct.class);
                 break;
-
-
+            case 300:
+                showFilesDialog(this,dataDir,"set",ListAct.class);
+                break;
         }
         return true;
     }
@@ -269,144 +252,54 @@ public class MainActivity extends AppCompatActivity implements CameraBridgeViewB
 
         switch (view.getId()) {
             case R.id.start_btn:
-                startbtn(true);
-                if (isStart) {
+                if (isStart)
+                {
+                    isStart=false;
+                    videoRecoder.saveToSdcard();
+                    videoRecoder=null;
+                    startBtn.setText("录制（List）");
+                    startBtn.setBackgroundColor(Color.argb(0,0,0,0));
+                    starBtn1.setClickable(true);
+
+                }
+                else
+                {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+                    String currentDateandTime = sdf.format(new Date());
+                    filename = dataDir + "/" + currentDateandTime + ".avi";
+                    videoRecoder=new VideoRecoderList(this,filename,VideoWriter.fourcc('M', 'J', 'P', 'G'),18,framesize);
                     startBtn.setText("录制中");
-                    showBtn.setClickable(false);
-                } else {
-                    startBtn.setText("录制（直接写入慢）");
-                    showBtn.setClickable(true);
+                    startBtn.setBackgroundColor(Color.RED);
+                    starBtn1.setClickable(false);
+                    isStart=true;
                 }
                 break;
             case R.id.show_btn:
-                startbtn(false);
-                if (isStart) {
-                    isRecord=true;
-                    showBtn.setText("录制中");
-                    startBtn.setClickable(false);
-                } else {
-                    showBtn.setText("录制（间接写入快）");
+                if (isStart)
+                {
+                    isStart=false;
+                    videoRecoder.saveToSdcard();
+                    videoRecoder=null;
+                    starBtn1.setText("录制（Set）");
+                    starBtn1.setBackgroundColor(Color.argb(0,0,0,0));
                     startBtn.setClickable(true);
+
+                }
+                else
+                {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
+                    String currentDateandTime = sdf.format(new Date());
+                    filename = dataDir + "/" + currentDateandTime + ".avi";
+                    videoRecoder=new VideoRecoderSet(this,filename,VideoWriter.fourcc('M', 'J', 'P', 'G'),18,framesize);
+                    starBtn1.setText("录制中");
+                    starBtn1.setBackgroundColor(Color.RED);
+                    startBtn.setClickable(false);
+                    isStart=true;
                 }
                 break;
 
         }
     }
 
-    private void startbtn(boolean isWriteImmediately) {
-        if (!isStart) {
-            startRecordVideo(isWriteImmediately);
-
-        } else {
-            stopRecordVideo(isWriteImmediately);
-
-        }
-    }
-
-    private void stopRecordVideo(boolean isWriteImmediately) {
-        isStart = false;
-        try {
-            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename + ".vr"));
-            oos.writeObject(sensorData);
-            oos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (sensorData != null) sensorData.clear();
-        if (isWriteImmediately) {
-            videoWriter.release();
-            videoWriter = null;
-            Toast.makeText(MainActivity.this, filename + "已保存", Toast.LENGTH_LONG).show();
-        } else {
-            progressDialog = ProgressDialog.show(this, "视频保存中", "视频保存中,请耐心等待....", false, false);
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    for (Mat mat : MatData) {
-                        videoWriter.write(mat);
-                    }
-                    if (MatData != null) MatData.clear();
-                    videoWriter.release();
-                    Log.d(TAG, "videoWriter is release?" + videoWriter.isOpened());
-                    Log.d(TAG, "MatData is clear?" + MatData.size());
-                    videoWriter = null;
-                    Message msg = Message.obtain();
-                    msg.what = CANCEL_PROGRESSDIALOG;
-                    handler.sendMessage(msg);
-                }
-            }).start();
-        }
-    }
-
-    private void startRecordVideo(boolean isWriteImmediately) {
-        this.isWriteImmediately = isWriteImmediately;
-        if (videoWriter == null) {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
-            String currentDateandTime = sdf.format(new Date());
-            filename = dataDir + "/" + currentDateandTime + ".avi";
-            videoWriter = new VideoWriter(filename, VideoWriter.fourcc('M', 'J', 'P', 'G'), 20, framesize);
-            Log.d("VideoWriter", "videoWriter is create:" + filename + " size:" + framesize);
-            Log.d("VideoWriter", "videoWriter is open:" + videoWriter.isOpened());
-        }
-        if (sensorData == null) {
-            sensorData = new ArrayList<>();
-            Log.d("VideoWriter", "create sensorData:" + sensorData);
-        }
-        if (sensorData.size() != 0) {
-            sensorData.clear();
-            Log.d("VideoWriter", "sensorData clear:" + sensorData);
-        }
-        isStart = true;
-    }
-
-    //    private void showFilesDialog(final Context context, final String dirPath, final Class target) {
-//        File file = new File(dirPath);
-//        final String[] list = file.list();
-//        final ArrayList<String> arrayList = new ArrayList<String>();
-//        for (String line : list) {
-//            if (!line.contains(".vr"))
-//                arrayList.add(line);
-//
-//        }
-//        final String[] results = new String[arrayList.size()];
-//        arrayList.toArray(results);
-//        if (results.length < 1) {
-//
-//            Toast.makeText(context, "没有文件", Toast.LENGTH_LONG).show();
-//        } else {
-//
-//
-//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//            builder.setTitle("选择文件");
-//
-//
-//            final int[] select = {0};
-//            builder.setSingleChoiceItems(results, 0, new DialogInterface.OnClickListener() {
-//                @Override
-//                public void onClick(DialogInterface dialogInterface, int i) {
-//                    select[0] = i;
-//                }
-//            });
-//            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-//                @Override
-//                public void onClick(DialogInterface dialogInterface, int i) {
-//                    Intent intent = new Intent(MainActivity.this, target);
-//                    intent.putExtra("path", dataDir + "/" + results[select[0]]);
-//                    startActivity(intent);
-//
-//                }
-//            });
-//            builder.setNegativeButton("取消", null);
-//            builder.setNeutralButton("删除", new DialogInterface.OnClickListener() {
-//                @Override
-//                public void onClick(DialogInterface dialogInterface, int i) {
-//                    new File(dataDir + "/" + results[select[0]]).delete();
-//                    new File(dataDir + "/" + results[select[0]]+".vr").delete();
-//                    showFilesDialog(context, dirPath, target);
-//                }
-//            });
-//            builder.show();
-//        }
-//    }
 
 }

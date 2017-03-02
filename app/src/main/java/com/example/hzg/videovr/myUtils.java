@@ -7,6 +7,8 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import org.opencv.videoio.VideoCapture;
@@ -26,12 +28,12 @@ import java.util.HashMap;
 
 public  class myUtils {
     static String TAG="myUtils";
-    public static  ArrayList<Float> readSensor(String dataPath)
+    public static  Object readSensor(String dataPath)
     {
-        ArrayList<Float> sensorData=null;
+        Object sensorData=null;
         try {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(dataPath));
-            sensorData = (ArrayList<Float>) ois.readObject();
+            sensorData = ois.readObject();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (IOException e) {
@@ -42,8 +44,8 @@ public  class myUtils {
             return  sensorData;
         }
     }
-    public static void initMatMap(VideoCapture capture, HashMap<Float,Mat> matMap, ArrayList<Float> sensorList) {
-        for (float i:sensorList) {
+    public static void initMatMap(VideoCapture capture, HashMap<Integer,Mat> matMap, ArrayList<Integer> sensorList) {
+        for (int i:sensorList) {
             //videoCapture.set(Videoio.CAP_PROP_POS_FRAMES,i);
             Mat mat=new Mat();
             boolean readed=capture.read(mat);
@@ -54,7 +56,7 @@ public  class myUtils {
         }
 
     }
-    public static void showFilesDialog(final Context context, final String dirPath, final Class target) {
+    public static void showFilesDialog(final Context context, final String dirPath, final String type,final Class target) {
         File file = new File(dirPath);
         final String[] list = file.list();
         final ArrayList<String> arrayList = new ArrayList<String>();
@@ -87,6 +89,7 @@ public  class myUtils {
                 public void onClick(DialogInterface dialogInterface, int i) {
                     Intent intent = new Intent(context, target);
                     intent.putExtra("path", dirPath + "/" + results[select[0]]);
+                    intent.putExtra("type",type);
                     context.startActivity(intent);
 
                 }
@@ -97,10 +100,24 @@ public  class myUtils {
                 public void onClick(DialogInterface dialogInterface, int i) {
                     new File(dirPath + "/" + results[select[0]]).delete();
                     new File(dirPath + "/" + results[select[0]]+".vr").delete();
-                    showFilesDialog(context, dirPath, target);
+                    showFilesDialog(context, dirPath,type, target);
                 }
             });
             builder.show();
         }
     }
+
+    public static void main(String[] args) {
+        Mat mat=new Mat(2,2, CvType.CV_8UC1);
+        byte[] bytes=new byte[]{0,1,2,3};
+        mat.put(0,0,bytes);
+        Mat matT=new Mat();
+        Core.transpose(mat,matT);
+        System.out.println(mat.get(0,0));
+        System.out.println(matT.get(0,0));
+
+
+
+    }
+
 }
