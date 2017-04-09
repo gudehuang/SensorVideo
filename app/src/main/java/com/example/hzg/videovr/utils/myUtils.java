@@ -1,4 +1,4 @@
-package com.example.hzg.videovr;
+package com.example.hzg.videovr.utils;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -28,34 +28,7 @@ import java.util.HashMap;
 
 public  class myUtils {
     static String TAG="myUtils";
-    public static  Object readSensor(String dataPath)
-    {
-        Object sensorData=null;
-        try {
-            ObjectInputStream ois = new ObjectInputStream(new FileInputStream(dataPath));
-            sensorData = ois.readObject();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }finally {
-            return  sensorData;
-        }
-    }
-    public static void initMatMap(VideoCapture capture, HashMap<Integer,Mat> matMap, ArrayList<Integer> sensorList) {
-        for (int i:sensorList) {
-            //videoCapture.set(Videoio.CAP_PROP_POS_FRAMES,i);
-            Mat mat=new Mat();
-            boolean readed=capture.read(mat);
-            //颜色转换 将BGR转为RGB
-            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGBA);
-            matMap.put(i, mat);
-            Log.d(TAG, "put Mat isread?" + readed + " x:" + i + " mat:" + mat);
-        }
 
-    }
     public static void showFilesDialog(final Context context, final String dirPath, final String type,final Class target) {
         File file = new File(dirPath);
         final String[] list = file.list();

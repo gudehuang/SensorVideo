@@ -1,4 +1,4 @@
-package com.example.hzg.videovr;
+package com.example.hzg.videovr.videoio;
 
 import android.util.Log;
 import android.util.SparseArray;
@@ -12,7 +12,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 import static android.content.ContentValues.TAG;
@@ -27,7 +26,7 @@ public class VideoReaderSet implements VideoReader {
     private SparseArray<Mat> data;
     private VideoCapture videoCapture;
     private  String videoMessage;
-    VideoReaderSet(String filename)
+   public VideoReaderSet(String filename)
     {
         try {
             ObjectInputStream ois=new ObjectInputStream(new FileInputStream(filename+".vr"));
@@ -74,5 +73,25 @@ public class VideoReaderSet implements VideoReader {
     @Override
     public String getVideoMessage() {
         return videoMessage;
+    }
+
+    @Override
+    public int getType() {
+        return 0;
+    }
+
+    @Override
+    public int getLength() {
+        return 0;
+    }
+
+    @Override
+    public int getSensorIndex(int sensor) {
+        return 0;
+    }
+
+    @Override
+    public void readMat(int position, Mat mat) {
+
     }
 }

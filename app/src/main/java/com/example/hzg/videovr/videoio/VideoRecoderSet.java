@@ -1,4 +1,4 @@
-package com.example.hzg.videovr;
+package com.example.hzg.videovr.videoio;
 
 import android.content.Context;
 import android.widget.Toast;
@@ -10,7 +10,6 @@ import org.opencv.videoio.VideoWriter;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 /**
@@ -43,6 +42,11 @@ public class VideoRecoderSet implements VideoRecoder {
     }
 
     @Override
+    public void write(Mat mat, int sensor, int sensorY) {
+
+    }
+
+    @Override
     public void saveToSdcard() {
         try {
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filename + ".vr"));
@@ -65,5 +69,15 @@ public class VideoRecoderSet implements VideoRecoder {
     @Override
     public boolean contains(int sensor) {
         return sensorSet.contains(sensor);
+    }
+
+    @Override
+    public boolean contains(int sensor, int sensorY) {
+        return false;
+    }
+
+    @Override
+    public int getType() {
+        return 0;
     }
 }

@@ -43,7 +43,7 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
     protected Camera mCamera;
     protected JavaCameraFrame[] mCameraFrame;
     private SurfaceTexture mSurfaceTexture;
-    private byte[] tempFrame;
+
 
     public static class JavaCameraSizeAccessor implements ListItemAccessor {
 
@@ -150,6 +150,7 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
                     params.setPreviewFormat(ImageFormat.NV21);
                     Log.d(TAG, "Set preview size to " + Integer.valueOf((int)frameSize.width) + "x" + Integer.valueOf((int)frameSize.height));
                     params.setPreviewSize((int)frameSize.width, (int)frameSize.height);
+                    params.setPreviewSize(1280, 720);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && !Build.MODEL.equals("GT-I9100"))
                         //此函数是提高MediaRecorder录制摄像头视频性能的。
@@ -189,15 +190,15 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
                     //Yuv420 （width*height）对应Mat（行，列）关系：
                     // 行=height*1.5
                     //列=width
-//                    mFrameChain[0] = new Mat(mFrameHeight*3/2 , mFrameWidth, CvType.CV_8UC1);
-//                    mFrameChain[1] = new Mat(mFrameHeight*3/2, mFrameWidth, CvType.CV_8UC1);
-                    mFrameChain[0] = new Mat(mFrameWidth*3/2 , mFrameHeight, CvType.CV_8UC1);
-                    mFrameChain[1] = new Mat(mFrameWidth*3/2, mFrameHeight, CvType.CV_8UC1);
+                    mFrameChain[0] = new Mat(mFrameHeight*3/2 , mFrameWidth, CvType.CV_8UC1);
+                    mFrameChain[1] = new Mat(mFrameHeight*3/2, mFrameWidth, CvType.CV_8UC1);
+//                    mFrameChain[0] = new Mat(mFrameWidth*3/2 , mFrameHeight, CvType.CV_8UC1);
+//                    mFrameChain[1] = new Mat(mFrameWidth*3/2, mFrameHeight, CvType.CV_8UC1);
 
 
                   //创建缓存bitmap
                    // AllocateCache();
-                   setmCacheBitmap();
+                    setmCacheBitmap();
                     mCameraFrame = new JavaCameraFrame[2];
                     mCameraFrame[0] = new JavaCameraFrame(mFrameChain[0], mFrameWidth, mFrameHeight);
                     mCameraFrame[1] = new JavaCameraFrame(mFrameChain[1], mFrameWidth, mFrameHeight);
@@ -224,8 +225,111 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
 
         return result;
     }
+    @Override
+    public void onPreviewFrame(byte[] frame, Camera arg1) {
+        if (BuildConfig.DEBUG)
+            Log.d(TAG, "Preview Frame received. Frame size: " + frame.length);
+        synchronized (this) {
+            mFrameChain[mChainIdx].put(0, 0, frame);
+            mCameraFrameReady = true;
+            this.notify();
+        }
+        if (mCamera != null)
+            mCamera.addCallbackBuffer(mBuffer);
+    }
+    public static void rotateYUV240SP(byte[] src,byte[] des,int width,int height)
+    {
 
+        int wh = width * height;
+        //旋转Y
+        int k = 0;
+        for(int i=0;i<width;i++) {
+            for(int j=0;j<height;j++)
+            {
+                des[k] = src[width*j + i];
+                k++;
+            }
+        }
+
+        for(int i=0;i<width;i+=2) {
+            for(int j=0;j<height/2;j++)
+            {
+                des[k] = src[wh+ width*j + i];
+                des[k+1]=src[wh + width*j + i+1];
+                k+=2;
+            }
+        }
+
+
+    }
+    private class JavaCameraFrame implements CvCameraViewFrame {
+        @Override
+        public Mat gray() {
+            return mYuvFrameData.submat(0, mHeight, 0, mWidth);
+        }
+
+        @Override
+        public Mat rgba() {
+
+//           Imgproc.cvtColor(mYuvFrameData,mRgba, Imgproc.COLOR_YUV2RGBA_NV21, 4);
+//            Core.transpose(mRgba,mRgba);
+//            Core.flip(mRgba,mRgba,1);
+            Imgproc.cvtColor(mYuvFrameData,mRgbaF, Imgproc.COLOR_YUV2RGBA_NV21, 4);
+            Core.transpose(mRgbaF, mRgbaT);//transpose（src,targe） 将目标倒转 如840*480变为480*840
+            Core.flip(mRgbaT, mRgba, 1);
+            return mRgba;
+        }
+
+        public JavaCameraFrame(Mat Yuv420sp, int width, int height) {
+            super();
+            mWidth = width;
+            mHeight = height;
+            mYuvFrameData = Yuv420sp;
+            mRgba = new Mat();
+            mRgbaT = new Mat();
+            mRgbaF = new Mat();
+
+        }
+
+        public void release() {
+            mRgba.release();
+            mRgbaT.release();
+            mRgbaF.release();
+        }
+
+        private Mat mYuvFrameData;
+        private Mat mRgba;
+        private Mat mRgbaT;
+        private Mat mRgbaF;
+        private int mWidth;
+        private int mHeight;
+    };
+    @Override
+    protected Size calculateCameraFrameSize(List<?> supportedSizes, ListItemAccessor accessor, int surfaceWidth, int surfaceHeight) {
+        int calcWidth = 0;
+        int calcHeight = 0;
+
+        int maxAllowedWidth = (mMaxWidth != -1&& mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
+        int maxAllowedHeight = (mMaxHeight != -1 && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
+
+        for (Object size : supportedSizes) {
+            int width = accessor.getWidth(size);
+            int height = accessor.getHeight(size);
+
+            //if (width <= maxAllowedWidth && height <= maxAllowedHeight)
+            if (width <= maxAllowedHeight && height <= maxAllowedWidth)
+            {
+                if (width >= calcWidth && height >= calcHeight) {
+                    calcWidth = (int) width;
+                    calcHeight = (int) height;
+                }
+            }
+        }
+
+        return new Size(calcWidth, calcHeight);
+    }
     protected void releaseCamera() {
+        System.out.println("releaseCamera");
         synchronized (this) {
             if (mCamera != null) {
                 mCamera.stopPreview();
@@ -296,90 +400,9 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
         mCameraFrameReady = false;
     }
 
-    @Override
-    public void onPreviewFrame(byte[] frame, Camera arg1) {
-        if (BuildConfig.DEBUG)
-            Log.d(TAG, "Preview Frame received. Frame size: " + frame.length);
-        synchronized (this) {
-            if (tempFrame==null)
-            tempFrame=new byte[frame.length];
-            rotateYUV240SP(frame,tempFrame,mFrameWidth,mFrameHeight);
-            mFrameChain[mChainIdx].put(0, 0, tempFrame);
-           // mFrameChain[mChainIdx].put(0, 0, frame);
-            mCameraFrameReady = true;
-            this.notify();
-        }
-        if (mCamera != null)
-            mCamera.addCallbackBuffer(mBuffer);
-    }
 
 
-    @Override
-    protected Size calculateCameraFrameSize(List<?> supportedSizes, ListItemAccessor accessor, int surfaceWidth, int surfaceHeight) {
-        int calcWidth = 0;
-        int calcHeight = 0;
 
-        int maxAllowedWidth = (mMaxWidth != -1&& mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
-        int maxAllowedHeight = (mMaxHeight != -1 && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
-
-        for (Object size : supportedSizes) {
-            int width = accessor.getWidth(size);
-            int height = accessor.getHeight(size);
-
-           //if (width <= maxAllowedWidth && height <= maxAllowedHeight)
-            if (width <= maxAllowedHeight && height <= maxAllowedWidth)
-            {
-                if (width >= calcWidth && height >= calcHeight) {
-                    calcWidth = (int) width;
-                    calcHeight = (int) height;
-                }
-            }
-        }
-
-        return new Size(calcWidth, calcHeight);
-    }
-
-    private class JavaCameraFrame implements CvCameraViewFrame {
-        @Override
-        public Mat gray() {
-            return mYuvFrameData.submat(0, mHeight, 0, mWidth);
-        }
-
-        @Override
-        public Mat rgba() {
-
-            Imgproc.cvtColor(mYuvFrameData,mRgbaF, Imgproc.COLOR_YUV2RGBA_NV21, 4);
-            //Core.transpose(mRgbaT, mRgbaF);
-            //mat.release();
-            //transpose（src,targe） 将目标倒转 如840*480变为480*840
-            Core.flip(mRgbaF, mRgba, 1);
-            return mRgba;
-        }
-
-        public JavaCameraFrame(Mat Yuv420sp, int width, int height) {
-            super();
-            mWidth = width;
-            mHeight = height;
-            mYuvFrameData = Yuv420sp;
-            mRgba = new Mat();
-          //  mRgbaT = new Mat();
-            mRgbaF = new Mat();
-
-        }
-
-        public void release() {
-            mRgba.release();
-          //  mRgbaT.release();
-            mRgbaF.release();
-        }
-
-        private Mat mYuvFrameData;
-        private Mat mRgba;
-        //private Mat mRgbaT;
-        private Mat mRgbaF;
-        private int mWidth;
-        private int mHeight;
-    };
 
     private class CameraWorker implements Runnable {
 
@@ -404,6 +427,7 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
                 }
 
                 if (!mStopThread && hasFrame) {
+                   // Log.d("CameraWorker","Thread:"+Thread.currentThread().getId());
                     if (!mFrameChain[1 - mChainIdx].empty())
                         deliverAndDrawFrame(mCameraFrame[1 - mChainIdx]);
                 }
@@ -411,29 +435,5 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
             Log.d(TAG, "Finish processing thread");
         }
     }
-    public static void rotateYUV240SP(byte[] src,byte[] des,int width,int height)
-    {
 
-        int wh = width * height;
-        //旋转Y
-        int k = 0;
-        for(int i=0;i<width;i++) {
-            for(int j=0;j<height;j++)
-            {
-                des[k] = src[width*j + i];
-                k++;
-            }
-        }
-
-        for(int i=0;i<width;i+=2) {
-            for(int j=0;j<height/2;j++)
-            {
-                des[k] = src[wh+ width*j + i];
-                des[k+1]=src[wh + width*j + i+1];
-                k+=2;
-            }
-        }
-
-
-    }
 }

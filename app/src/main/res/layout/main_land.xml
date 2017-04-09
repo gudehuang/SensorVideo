@@ -1,20 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:opencv="http://schemas.android.com/apk/res-auto"
-    xmlns:com.oguzdev="http://schemas.android.com/tools"
-    android:orientation="vertical"
-    android:layout_width="match_parent"
+    android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:weightSum="1">
 
-    <com.example.hzg.videovr.MyCameraView
+    <org.opencv.android.JavaCameraView
         android:id="@+id/javacameraview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        opencv:show_fps="true"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentStart="true" />
+        opencv:show_fps="true" />
 
     <LinearLayout
         android:id="@+id/linearlayout"
@@ -36,7 +32,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
             <Button
-                android:layout_gravity="center"
                 android:text="@string/btn_name1"
                 android:id="@+id/start_btn"
                 android:textStyle="bold"
@@ -46,16 +41,15 @@
         </LinearLayout>
 
     </LinearLayout>
-<android.support.design.widget.FloatingActionButton
-    android:id="@+id/float_menu"
-    opencv:backgroundTint="@color/colorFlo"
-    android:layout_above="@id/linearlayout"
-    android:src="@android:drawable/ic_menu_manage"
-    opencv:rippleColor="@color/colorAccent"
-    android:layout_marginTop="100dp"
-    android:layout_marginRight="16dp"
-    android:layout_alignParentRight="true"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content" />
-
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/float_menu"
+        opencv:backgroundTint="@color/colorFlo"
+        android:layout_above="@id/linearlayout"
+        android:src="@android:drawable/ic_menu_manage"
+        opencv:rippleColor="@color/colorAccent"
+        android:layout_marginTop="100dp"
+        android:layout_marginRight="16dp"
+        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </RelativeLayout>

@@ -1,4 +1,4 @@
-package com.example.hzg.videovr;
+package com.example.hzg.videovr.activity;
 
 import android.content.Context;
 import android.hardware.Camera;
@@ -24,7 +24,13 @@ public class CameraJavaView extends JavaCameraView {
         super(context, attrs);
         mcontext=context;
     }
-   public List<Camera.Size> getResolutionList()
+
+    @Override
+    protected boolean connectCamera(int width, int height) {
+        return super.connectCamera(width, height);
+    }
+
+    public List<Camera.Size> getResolutionList()
     {
         return  mCamera.getParameters().getSupportedPreviewSizes();
     }
@@ -33,6 +39,11 @@ public class CameraJavaView extends JavaCameraView {
     {
         disconnectCamera();
         connectCamera(resolution.width,resolution.height);
+    }
+    public  void  setResolution(int width,int height)
+    {
+        disconnectCamera();
+        connectCamera(width,height);
     }
     public  void  RecordVideo(String filename,Size size)
     {
@@ -46,30 +57,29 @@ public class CameraJavaView extends JavaCameraView {
 
         int calcWidth = 0;
         int calcHeight = 0;
+     {
+           int maxAllowedWidth = (mMaxWidth != MAX_UNSPECIFIED && mMaxWidth < surfaceWidth) ? mMaxWidth : surfaceWidth;
+           int maxAllowedHeight = (mMaxHeight != MAX_UNSPECIFIED && mMaxHeight < surfaceHeight) ? mMaxHeight : surfaceHeight;
 
-        int maxAllowedWidth = (mMaxWidth != MAX_UNSPECIFIED && mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
-        int maxAllowedHeight = (mMaxHeight != MAX_UNSPECIFIED && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
+           for (Object size : supportedSizes) {
+               int width = accessor.getWidth(size);
+               int height = accessor.getHeight(size);
 
-        for (Object size : supportedSizes) {
-            int width = accessor.getWidth(size);
-            int height = accessor.getHeight(size);
+               if (width <= maxAllowedWidth && height <= maxAllowedHeight)
+//               if (width <= maxAllowedHeight && height <= maxAllowedWidth) {
+                   if (width >= calcWidth && height >= calcHeight) {
+                       calcWidth = (int) width;
+                       calcHeight = (int) height;
+                   }
 
-            //if (width <= maxAllowedWidth && height <= maxAllowedHeight)
-            if (width <= maxAllowedHeight && height <= maxAllowedWidth)
-            {
-                if (width >= calcWidth && height >= calcHeight) {
-                    calcWidth = (int) width;
-                    calcHeight = (int) height;
-                }
-            }
-        }
-
+           }
+       }
         return new Size(calcWidth, calcHeight);
 
     }
 
     @Override
     protected void AllocateCache() {
-        super.AllocateCache();
+        super.setmCacheBitmap();
     }
 }

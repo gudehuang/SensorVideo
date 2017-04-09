@@ -4,14 +4,17 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.nfc.Tag;
 import android.os.Bundle;
-import android.os.Message;
+import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+
+import com.example.hzg.videovr.utils.Filtering;
+import com.example.hzg.videovr.videoio.VideoReader;
+import com.example.hzg.videovr.videoio.VideoReaderForVideo;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -25,7 +28,7 @@ import org.opencv.videoio.Videoio;
  * Created by hzg on 2017/2/21.
  */
 
-public class VideoAct extends AppCompatActivity implements SensorEventListener {
+public class VideoAct1 extends AppCompatActivity implements SensorEventListener {
     VideoShowView videoShowView;
     private String dataPath;
     private VideoCapture videoCapture;
@@ -36,12 +39,18 @@ public class VideoAct extends AppCompatActivity implements SensorEventListener {
     private float dataZ;
     private boolean isRun=false;
     private boolean isChange=false;
-    private BaseLoaderCallback baseLoaderCallback=new BaseLoaderCallback(this) {
+    private boolean isRight;
+    private double angleCount;
+    private int angleChangecount;
+   Filtering xFiltering=new Filtering(3);
+   Filtering yFiltering=new Filtering(3);
+    private VideoReaderForVideo videoReader;
+    private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
-            switch (status)
-            {
-                case  BaseLoaderCallback.SUCCESS:
+            switch (status) {
+                case BaseLoaderCallback.SUCCESS:
+                    videoReader=new VideoReaderForVideo(dataPath);
                     break;
                 default:
                     super.onManagerConnected(status);
@@ -49,16 +58,17 @@ public class VideoAct extends AppCompatActivity implements SensorEventListener {
 
         }
     };
-    private boolean isRight;
-    private double angleCount;
-    private int angleChangecount;
+    private boolean isRecord=false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getSupportActionBar().hide();
         setContentView(R.layout.video_act);
         videoShowView= (VideoShowView) findViewById(R.id.videoshowview);
         dataPath=getIntent().getStringExtra("path");
+        Log.d("VideoAct","UI Thread:"+Thread.currentThread());
+
         Log.d("VideoAct","OnCreate#Intent datapath："+dataPath);
         if (dataPath==null)
         {
@@ -78,36 +88,39 @@ public class VideoAct extends AppCompatActivity implements SensorEventListener {
                 else {
                     isRun=true;
                     btnStart.setText("状态：开启");
-                    if (videoCapture==null)
-                    videoCapture = new VideoCapture(dataPath);
-                     final double count = videoCapture.get(Videoio.CAP_PROP_FRAME_COUNT);
-                    final double counteverangle=count/360;
-                    Log.d("VideoAct","VideoCapture is Open?"+videoCapture.isOpened());
-                    Log.d("VideoAct","VideoCapture Frame Count:"+count+"\nper angle frame count:"+counteverangle);
-
+                    if (videoReader==null)
+                   videoReader = new VideoReaderForVideo(dataPath);
+                    final Mat mat=new Mat();
+                     final int count =videoReader.getLength()-1;
+                    final double countper=count/180.0;
+                    final  int Index=count/2;
+                    final  int initX=videoReader.getSensor(Index);
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            final Mat mat = new Mat();
-                            int i= 0;
+                            Log.d("VideoAct","new Thread:"+Thread.currentThread());
+                            int startX= (int) dataX;
                             while (isRun) {
+                                if (isRecord) {
+                                    int positon =0;
+                                    int nowX = (int) dataX;
 
-//                                while (isChange&&isRun) {
-//                                    readvideo1(mat, counteverangle, count);
-//
-//                                }
-                                final double positon=dataX*counteverangle;
-                                videoCapture.set(Videoio.CAP_PROP_POS_FRAMES,positon);
-                                videoCapture.read(mat);
-                                Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGBA);
-                                new Thread(new Runnable() {
-                                    @Override
-                                    public void run() {
+                                    if (videoReader.getType() == VideoReader.TYPE_HORIZONTAL) {
+                                        positon = (nowX - startX +Index+360) % 360;
+                                    } else
+                                        positon = (nowX-startX + Index+360) % 360;
+
+                                    Log.d("position", "" + positon);
+                                   // positon = positon < 1 ?1 : (positon > count ? count : positon);
+                                    Log.d("VidoeAct", "dataX: " + nowX + "  startX:" + startX + " position:" + positon + " count:" + count);
+                                    if (positon>0&&positon<count) {
+                                        videoReader.readMat(positon, mat);
+                                        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGBA);
                                         videoShowView.showBitmap(mat);
                                     }
-                                }).start();
-                                i++;
-                                Log.d("VidoeAct","show count: "+i +"  angle change count"+angleChangecount);
+                                    isRecord = false;
+
+                                }
                             }
 
                         }
@@ -116,8 +129,10 @@ public class VideoAct extends AppCompatActivity implements SensorEventListener {
             }
         });
 
-    }
+}
 
+
+//以前的尝试，弃用
     private void readvideo1(Mat mat, double counteverangle, double count) {
         int i;
         Log.d("VideoAct","dataX:"+dataX);
@@ -157,7 +172,12 @@ public class VideoAct extends AppCompatActivity implements SensorEventListener {
     protected void onResume() {
         super.onResume();
         sensorManager.registerListener(this,sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),SensorManager.SENSOR_DELAY_GAME);
+        if (!OpenCVLoader.initDebug()) {
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, baseLoaderCallback);
+        } else {
+            baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
 
+        }
 
     }
 
@@ -166,28 +186,14 @@ public class VideoAct extends AppCompatActivity implements SensorEventListener {
         switch (sensorEvent.sensor.getType())
         {
             case  Sensor.TYPE_ORIENTATION:
-
-
-
-//                    float x=sensorEvent.values[0];
-//                    float y=sensorEvent.values[1];
-//                    float z=sensorEvent.values[2];
-
-//                    if (Math.abs(dataY-y)<5&&Math.abs(dataZ-z)<5&&Math.abs(dataX-x)>5)
-//                    {
-//                        // Log.d("record","x:"+x);
-//
-//                        isChange=true;
-//                        if (dataX-x<0)
-//                        isRight=false;
-//                        else isRight=true;
-//                        angleCount=Math.abs(dataX-x);
-//                        dataX=x;
-//                    }
-
-                 dataX=sensorEvent.values[0];
-                 angleChangecount++;
-
+                xFiltering.put(sensorEvent.values[0]);
+                yFiltering.put(sensorEvent.values[1]);
+                if (!isRecord) {
+                    if (videoReader!=null&&videoReader.getType() == VideoReader.TYPE_HORIZONTAL)
+                        dataX = xFiltering.getResult();
+                    else dataX = yFiltering.getResult();
+                    isRecord=true;
+                }
                 break;
 
         }

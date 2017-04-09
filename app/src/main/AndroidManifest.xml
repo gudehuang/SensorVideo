@@ -18,16 +18,40 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity"
+        <activity android:name=".activity.MainActivity"
             android:screenOrientation="portrait">
+
+        </activity>
+        <activity android:name=".ListAct"/>
+        <activity android:name=".activity.VideoAct"/>
+
+        <activity android:name=".activity.MainActivity1">
+
+        </activity>
+        <activity android:name=".activity.MainActivity2">
+
+        </activity>
+<activity android:name=".activity.MainActivityJavaCameraView">
+
+</activity>
+        <activity android:name=".activity.MainActivity4"/>
+        <activity android:name=".StartAct">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ListAct"/>
-        <activity android:name=".VideoAct"/>
+        <activity android:name=".VideoAct1"/>
+        <activity android:name=".activity.Tutorial1Activity">
+
+        </activity>
+        <activity android:name=".MainActivityCv4"
+            android:screenOrientation="portrait"/>
+        <activity android:name=".MainActivityCv4Land"
+            android:screenOrientation="landscape"/>
+        <activity android:name=".show.FileActivity"/>
+        <activity android:name=".show.MainActivity"
+            android:screenOrientation="landscape"/>
     </application>
 
 </manifest>
