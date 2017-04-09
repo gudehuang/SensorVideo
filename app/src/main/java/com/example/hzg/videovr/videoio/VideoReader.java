@@ -10,6 +10,7 @@ public interface VideoReader {
     static final int  TYPE_HORIZONTAL=361;
     static final int  TYPE_VERCICAL=-361;
     static final int  TYPE_UNKNOW=362;
+    static final int  TYPE_360=363;
     int  getSensor(int position);
     Mat getMat(int position);
     int size();
@@ -17,5 +18,5 @@ public interface VideoReader {
     int getType();
     int getLength();
     int  getSensorIndex(int sensor);
-    void  readMat(int position,Mat mat);
+    void  readMat(int position, Mat mat);
 }

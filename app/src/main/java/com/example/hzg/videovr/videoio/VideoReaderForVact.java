@@ -15,7 +15,7 @@ import java.util.ArrayList;
  * Created by hzg on 2017/2/27.
  */
 
-public class VideoReaderForVideo implements VideoReader {
+public class VideoReaderForVact implements VideoReader {
     private ArrayList<Integer> sensorList;
     private VideoCapture videoCapture;
     private  String videoMessage;
@@ -23,7 +23,7 @@ public class VideoReaderForVideo implements VideoReader {
     private  int type=VideoReader.TYPE_HORIZONTAL;
     private  int  length;
     private  Mat mat;
- public VideoReaderForVideo(String filename)
+ public VideoReaderForVact(String filename)
  {
      try {
          ObjectInputStream ois=new ObjectInputStream(new FileInputStream(filename+".vr"));

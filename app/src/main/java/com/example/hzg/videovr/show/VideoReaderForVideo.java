@@ -2,6 +2,8 @@ package com.example.hzg.videovr.show;
 
 import android.content.Context;
 
+import com.example.hzg.videovr.videoio.VideoReader;
+
 import org.opencv.core.Mat;
 import org.opencv.videoio.VideoCapture;
 import org.opencv.videoio.Videoio;

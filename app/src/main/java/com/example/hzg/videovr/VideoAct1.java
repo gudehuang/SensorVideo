@@ -5,7 +5,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -14,7 +13,7 @@ import android.widget.Button;
 
 import com.example.hzg.videovr.utils.Filtering;
 import com.example.hzg.videovr.videoio.VideoReader;
-import com.example.hzg.videovr.videoio.VideoReaderForVideo;
+import com.example.hzg.videovr.videoio.VideoReaderForVact;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.LoaderCallbackInterface;
@@ -44,13 +43,13 @@ public class VideoAct1 extends AppCompatActivity implements SensorEventListener 
     private int angleChangecount;
    Filtering xFiltering=new Filtering(3);
    Filtering yFiltering=new Filtering(3);
-    private VideoReaderForVideo videoReader;
+    private VideoReaderForVact videoReader;
     private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
         @Override
         public void onManagerConnected(int status) {
             switch (status) {
                 case BaseLoaderCallback.SUCCESS:
-                    videoReader=new VideoReaderForVideo(dataPath);
+                    videoReader=new VideoReaderForVact(dataPath);
                     break;
                 default:
                     super.onManagerConnected(status);
@@ -89,7 +88,7 @@ public class VideoAct1 extends AppCompatActivity implements SensorEventListener 
                     isRun=true;
                     btnStart.setText("状态：开启");
                     if (videoReader==null)
-                   videoReader = new VideoReaderForVideo(dataPath);
+                   videoReader = new VideoReaderForVact(dataPath);
                     final Mat mat=new Mat();
                      final int count =videoReader.getLength()-1;
                     final double countper=count/180.0;

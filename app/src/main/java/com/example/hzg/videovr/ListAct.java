@@ -18,7 +18,6 @@ import android.widget.TextView;
 
 import com.example.hzg.videovr.videoio.VideoReader;
 import com.example.hzg.videovr.videoio.VideoReaderList;
-import com.example.hzg.videovr.videoio.VideoReaderSet;
 
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
