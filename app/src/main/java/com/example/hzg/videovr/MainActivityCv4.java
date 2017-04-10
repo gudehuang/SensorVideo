@@ -120,7 +120,6 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
     };
     private int dataY;
 
- private    PopupMenu popupMenu;
     private ImageButton btn_record,btn_show,btn_switch;
     private  TextView recodeTv;
     private Chronometer chronometer;
@@ -143,38 +142,6 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         cameraview.setCvCameraViewListener(this);
         init();
         Log.d("Activity","UI Thread:"+Thread.currentThread());
-    }
-
-    public  void  onPopupButtonClick(View button)
-    {
-        if (popupMenu==null) {
-            popupMenu = new PopupMenu(this, button);
-            popupMenu.getMenuInflater().inflate(R.menu.menu, popupMenu.getMenu());
-            popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
-                @Override
-                public boolean onMenuItemClick(MenuItem item) {
-
-                    switch (item.getItemId()) {
-                        case R.id.menu_photo:
-                            showFilesDialog(MainActivityCv4.this, dataDir, "list", ListAct.class);
-                            break;
-                        case R.id.menu_video:
-                            showFilesDialog(MainActivityCv4.this, dataDir, "", VideoAct1.class);
-                            break;
-                        case R.id.menu_vr:
-                            startActivity(new Intent(MainActivityCv4.this, FileActivity.class));
-                            finish();
-                            break;
-                        case R.id.menu_land:
-                            startActivity(new Intent(MainActivityCv4.this, MainActivityCv4Land.class));
-                            finish();
-                            break;
-                    }
-                    return true;
-                }
-            });
-        }
-        popupMenu.show();
     }
 
     private void init() {
