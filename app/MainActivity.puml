@@ -1,0 +1,49 @@
+
+@startuml
+|用户|
+|Activity|
+start
+|用户|
+if(初次点击录制按钮) then(no)
+|用户|
+:isStart=false;
+detach
+
+else (yes)
+|Activity|
+:开启录制;
+|VideoRecord|
+:创建VideoRecord;
+|Activity|
+:isStart=ture;
+while(isStart==ture) is (yes)
+|JavaCameraView|
+:onCameraFrame;
+|Activity|
+:获取Mat;
+if(isRecord?) then(false)
+|方向传感器|
+:获取传感器数据;
+:isRecord=ture;
+else(true)
+endif
+|Activity|
+    if(判断是否写入)then(yes)
+    |VideoRecord|
+    :写入Mat和传感器数据;
+    :判断录制方向;
+    :isRecord=false;
+
+    endif
+
+
+endwhile(no)
+|VideoRecord|
+:保存视频文件和传感器文件;
+:销毁实例;
+|Activity|
+:结束录制;
+
+stop
+
+@enduml

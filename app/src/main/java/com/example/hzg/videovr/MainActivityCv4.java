@@ -36,6 +36,7 @@ import android.widget.Toast;
 
 import com.example.hzg.videovr.show.FileActivity;
 import com.example.hzg.videovr.utils.Filtering;
+import com.example.hzg.videovr.utils.myUtils;
 import com.example.hzg.videovr.videoio.VideoReader;
 import com.example.hzg.videovr.videoio.VideoRecoder;
 import com.example.hzg.videovr.videoio.VideoRecoderList;
@@ -351,6 +352,7 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                 break;
             case R.id.imgbtn_show:
                 startActivity(new Intent(this, FileActivity.class));
+               // myUtils.showFilesDialog(this,dataDirA,"",VideoAct1.class);
                 break;
             case  R.id.imgbtn_switch:
                 startActivity(new Intent(this, MainActivityCv4Land.class));

@@ -27,8 +27,6 @@
             </intent-filter>
         </activity>
         <activity android:name=".VideoAct1"/>
-
-
         <activity android:name=".MainActivityCv4"
             android:screenOrientation="portrait"/>
         <activity android:name=".MainActivityCv4Land"

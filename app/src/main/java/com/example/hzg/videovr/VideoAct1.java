@@ -4,6 +4,7 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.icu.text.LocaleDisplayNames;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -97,7 +98,6 @@ public class VideoAct1 extends AppCompatActivity implements SensorEventListener 
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            Log.d("VideoAct","new Thread:"+Thread.currentThread());
                             int startX= (int) dataX;
                             while (isRun) {
                                 if (isRecord) {
@@ -112,9 +112,12 @@ public class VideoAct1 extends AppCompatActivity implements SensorEventListener 
                                     Log.d("position", "" + positon);
                                    // positon = positon < 1 ?1 : (positon > count ? count : positon);
                                     Log.d("VidoeAct", "dataX: " + nowX + "  startX:" + startX + " position:" + positon + " count:" + count);
+
                                     if (positon>0&&positon<count) {
+                                        Log.d("readMat","start");
                                         videoReader.readMat(positon, mat);
                                         Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGBA);
+                                        Log.d("readMat","finish");
                                         videoShowView.showBitmap(mat);
                                     }
                                     isRecord = false;
