@@ -18,6 +18,9 @@ import com.example.hzg.videovr.R;
  * Created by william on 2017/1/19.
  */
 public class Btn {
+    /***
+     *
+     */
     private Paint mPaint ;
     private Bitmap back, commonmode, vrmode ,newvrmode;
     private int bx, by;
