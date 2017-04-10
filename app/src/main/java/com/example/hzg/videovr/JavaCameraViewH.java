@@ -7,13 +7,11 @@ import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.os.Build;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 
 import org.opencv.BuildConfig;
 import org.opencv.android.CameraBridgeViewBase;
-import org.opencv.core.Core;
 import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.Size;
@@ -30,7 +28,7 @@ import java.util.List;
  * When frame is delivered via callback from Camera - it processed via OpenCV to be
  * converted to RGBA32 and then passed to the external callback for modifications if required.
  */
-public class MyCameraView extends CameraBridgeViewBase implements PreviewCallback {
+public class JavaCameraViewH extends CameraBridgeViewBase implements PreviewCallback {
 
     private static final int MAGIC_TEXTURE_ID = 10;
     private static final String TAG = "JavaCameraView";
@@ -44,7 +42,6 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
     protected Camera mCamera;
     protected JavaCameraFrame[] mCameraFrame;
     private SurfaceTexture mSurfaceTexture;
-
 
     public static class JavaCameraSizeAccessor implements ListItemAccessor {
 
@@ -61,11 +58,11 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
         }
     }
 
-    public MyCameraView(Context context, int cameraId) {
+    public JavaCameraViewH(Context context, int cameraId) {
         super(context, cameraId);
     }
 
-    public MyCameraView(Context context, AttributeSet attrs) {
+    public JavaCameraViewH(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -74,6 +71,7 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
         boolean result = true;
         synchronized (this) {
             mCamera = null;
+
             if (mCameraIndex == CAMERA_ID_ANY) {
                 Log.d(TAG, "Trying to open camera with old open()");
                 try {
@@ -147,13 +145,12 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
                 if (sizes != null) {
                     /* Select the size that fits surface considering maximum size allowed */
                     Size frameSize = calculateCameraFrameSize(sizes, new JavaCameraSizeAccessor(), width, height);
-                  //设置预览图像格式，NV21即YUV420SP
+
                     params.setPreviewFormat(ImageFormat.NV21);
                     Log.d(TAG, "Set preview size to " + Integer.valueOf((int)frameSize.width) + "x" + Integer.valueOf((int)frameSize.height));
                     params.setPreviewSize((int)frameSize.width, (int)frameSize.height);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH && !Build.MODEL.equals("GT-I9100"))
-                        //此函数是提高MediaRecorder录制摄像头视频性能的。
                         params.setRecordingHint(true);
 
                     List<String> FocusModes = params.getSupportedFocusModes();
@@ -164,20 +161,19 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
 
                     mCamera.setParameters(params);
                     params = mCamera.getParameters();
-                     //竖屏下获取的摄像头图像是横着的，需要倒转
+
                     mFrameWidth = params.getPreviewSize().width;
                     mFrameHeight = params.getPreviewSize().height;
-                    Log.d("test","mFrameWidth:"+mFrameWidth+"#mFrameHeight："+mFrameHeight);
-                    //缩放比例
+
                     if ((getLayoutParams().width == LayoutParams.MATCH_PARENT) && (getLayoutParams().height == LayoutParams.MATCH_PARENT))
-                        mScale = Math.min(((float)height)/mFrameWidth, ((float)width)/mFrameHeight);
+                        mScale = Math.min(((float)height)/mFrameHeight, ((float)width)/mFrameWidth);
                     else
                         mScale = 0;
-                    //帧率显示
+
                     if (mFpsMeter != null) {
                         mFpsMeter.setResolution(mFrameWidth, mFrameHeight);
                     }
-                    //摄像头缓存大小
+
                     int size = mFrameWidth * mFrameHeight;
                     size  = size * ImageFormat.getBitsPerPixel(params.getPreviewFormat()) / 8;
                     mBuffer = new byte[size];
@@ -186,24 +182,14 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
                     mCamera.setPreviewCallbackWithBuffer(this);
 
                     mFrameChain = new Mat[2];
+                    mFrameChain[0] = new Mat(mFrameHeight + (mFrameHeight/2), mFrameWidth, CvType.CV_8UC1);
+                    mFrameChain[1] = new Mat(mFrameHeight + (mFrameHeight/2), mFrameWidth, CvType.CV_8UC1);
 
-                    //Yuv420 （width*height）对应Mat（行，列）关系：
-                    // 行=height*1.5
-                    //列=width
-                    mFrameChain[0] = new Mat(mFrameHeight*3/2 , mFrameWidth, CvType.CV_8UC1);
-                    mFrameChain[1] = new Mat(mFrameHeight*3/2, mFrameWidth, CvType.CV_8UC1);
-//                    mFrameChain[0] = new Mat(mFrameWidth*3/2 , mFrameHeight, CvType.CV_8UC1);
-//                    mFrameChain[1] = new Mat(mFrameWidth*3/2, mFrameHeight, CvType.CV_8UC1);
+                    AllocateCache();
 
-
-                  //创建缓存bitmap
-                   // AllocateCache();
-                    setmCacheBitmap();
                     mCameraFrame = new JavaCameraFrame[2];
                     mCameraFrame[0] = new JavaCameraFrame(mFrameChain[0], mFrameWidth, mFrameHeight);
                     mCameraFrame[1] = new JavaCameraFrame(mFrameChain[1], mFrameWidth, mFrameHeight);
-//                    mCameraFrame[0] = new JavaCameraFrame(mFrameChain[0], mFrameHeight, mFrameWidth);
-//                    mCameraFrame[1] = new JavaCameraFrame(mFrameChain[1], mFrameHeight, mFrameWidth);
 
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                         mSurfaceTexture = new SurfaceTexture(MAGIC_TEXTURE_ID);
@@ -225,104 +211,7 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
 
         return result;
     }
-    @Override
-    public void onPreviewFrame(byte[] frame, Camera arg1) {
-        if (BuildConfig.DEBUG)
-            Log.d(TAG, "Preview Frame received. Frame size: " + frame.length);
-        synchronized (this) {
-            mFrameChain[mChainIdx].put(0, 0, frame);
-            mCameraFrameReady = true;
-            this.notify();
-        }
-        if (mCamera != null)
-            mCamera.addCallbackBuffer(mBuffer);
-    }
-    public static void rotateYUV240SP(byte[] src,byte[] des,int width,int height)
-    {
 
-        int wh = width * height;
-        //旋转Y
-        int k = 0;
-        for(int i=0;i<width;i++) {
-            for(int j=0;j<height;j++)
-            {
-                des[k] = src[width*j + i];
-                k++;
-            }
-        }
-
-        for(int i=0;i<width;i+=2) {
-            for(int j=0;j<height/2;j++)
-            {
-                des[k] = src[wh+ width*j + i];
-                des[k+1]=src[wh + width*j + i+1];
-                k+=2;
-            }
-        }
-
-
-    }
-    private class JavaCameraFrame implements CvCameraViewFrame {
-        @Override
-        public Mat gray() {
-            return mYuvFrameData.submat(0, mHeight, 0, mWidth);
-        }
-
-        @Override
-        public Mat rgba() {
-            Imgproc.cvtColor(mYuvFrameData,mRgbaF, Imgproc.COLOR_YUV2RGBA_NV21, 4);
-            Core.transpose(mRgbaF, mRgbaT);//transpose（src,targe） 将目标倒转 如840*480变为480*840
-            Core.flip(mRgbaT, mRgba, 1);
-            return mRgba;
-        }
-
-        public JavaCameraFrame(Mat Yuv420sp, int width, int height) {
-            super();
-            mWidth = width;
-            mHeight = height;
-            mYuvFrameData = Yuv420sp;
-            mRgba = new Mat();
-            mRgbaT = new Mat();
-            mRgbaF = new Mat();
-
-        }
-
-        public void release() {
-            mRgba.release();
-            mRgbaT.release();
-            mRgbaF.release();
-        }
-
-        private Mat mYuvFrameData;
-        private Mat mRgba;
-        private Mat mRgbaT;
-        private Mat mRgbaF;
-        private int mWidth;
-        private int mHeight;
-    };
-    @Override
-    protected Size calculateCameraFrameSize(List<?> supportedSizes, ListItemAccessor accessor, int surfaceWidth, int surfaceHeight) {
-        int calcWidth = 0;
-        int calcHeight = 0;
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-
-        int maxAllowedWidth =dm.heightPixels;
-        int maxAllowedHeight =dm.widthPixels ;
-        System.out.println("max:"+maxAllowedWidth+"*"+maxAllowedWidth);
-        for (Object size : supportedSizes) {
-            int width = accessor.getWidth(size);
-            int height = accessor.getHeight(size);
-            if (width < maxAllowedWidth && height <maxAllowedHeight&&(float)height/width==9.0/16)
-            {
-                if (width >= calcWidth && height >= calcHeight) {
-                    calcWidth = (int) width;
-                    calcHeight = (int) height;
-                }
-            }
-        }
-
-        return new Size(calcWidth, calcHeight);
-    }
     protected void releaseCamera() {
         System.out.println("releaseCamera");
         synchronized (this) {
@@ -395,9 +284,72 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
         mCameraFrameReady = false;
     }
 
+    @Override
+    public void onPreviewFrame(byte[] frame, Camera arg1) {
+        if (BuildConfig.DEBUG)
+            Log.d(TAG, "Preview Frame received. Frame size: " + frame.length);
+        synchronized (this) {
+            mFrameChain[mChainIdx].put(0, 0, frame);
+            mCameraFrameReady = true;
+            this.notify();
+        }
+        if (mCamera != null)
+            mCamera.addCallbackBuffer(mBuffer);
+    }
 
+    private class JavaCameraFrame implements CvCameraViewFrame {
+        @Override
+        public Mat gray() {
+            return mYuvFrameData.submat(0, mHeight, 0, mWidth);
+        }
 
+        @Override
+        public Mat rgba() {
+            Imgproc.cvtColor(mYuvFrameData, mRgba, Imgproc.COLOR_YUV2RGBA_NV21, 4);
+            return mRgba;
+        }
 
+        public JavaCameraFrame(Mat Yuv420sp, int width, int height) {
+            super();
+            mWidth = width;
+            mHeight = height;
+            mYuvFrameData = Yuv420sp;
+            mRgba = new Mat();
+        }
+
+        public void release() {
+            mRgba.release();
+        }
+
+        private Mat mYuvFrameData;
+        private Mat mRgba;
+        private int mWidth;
+        private int mHeight;
+    };
+
+    @Override
+    protected Size calculateCameraFrameSize(List<?> supportedSizes, ListItemAccessor accessor, int surfaceWidth, int surfaceHeight) {
+        int calcWidth = 0;
+        int calcHeight = 0;
+
+        int maxAllowedWidth = (mMaxWidth != -1 && mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
+        int maxAllowedHeight = (mMaxHeight != -1 && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
+
+        for (Object size : supportedSizes) {
+            int width = accessor.getWidth(size);
+            int height = accessor.getHeight(size);
+            System.out.println(width+"*"+height);
+            if (width <= maxAllowedWidth && height <= maxAllowedHeight)
+            {
+                if (width >= calcWidth && height >= calcHeight&&(float)height/width==0.75) {
+                    calcWidth = (int) width;
+                    calcHeight = (int) height;
+                }
+            }
+        }
+
+        return new Size(calcWidth, calcHeight);
+    }
 
     private class CameraWorker implements Runnable {
 
@@ -405,10 +357,10 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
         public void run() {
             do {
                 boolean hasFrame = false;
-                synchronized (MyCameraView.this) {
+                synchronized (JavaCameraViewH.this) {
                     try {
                         while (!mCameraFrameReady && !mStopThread) {
-                            MyCameraView.this.wait();
+                            JavaCameraViewH.this.wait();
                         }
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -422,7 +374,6 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
                 }
 
                 if (!mStopThread && hasFrame) {
-                   // Log.d("CameraWorker","Thread:"+Thread.currentThread().getId());
                     if (!mFrameChain[1 - mChainIdx].empty())
                         deliverAndDrawFrame(mCameraFrame[1 - mChainIdx]);
                 }
@@ -430,5 +381,4 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
             Log.d(TAG, "Finish processing thread");
         }
     }
-
 }

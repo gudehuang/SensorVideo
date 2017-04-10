@@ -13,7 +13,10 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
+import android.provider.Settings;
 import android.support.annotation.NonNull;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -25,6 +28,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.Chronometer;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -50,12 +56,17 @@ import static com.example.hzg.videovr.utils.myUtils.showFilesDialog;
 
 public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2
         , SensorEventListener, View.OnClickListener {
+
     private CameraBridgeViewBase cameraview;
     private String TAG = "ShowActivity";
     private String sensorTextFomart = "方位角：%s\n仰俯角：%s\n横滚角：%s";
-    private String dataDir = Environment.getExternalStorageDirectory().getPath() + "/360video";
+   public static String dataDir = Environment.getExternalStorageDirectory().getPath() + "/360video";
+   public static String dataDirV = dataDir+"/"+"vertical";
+   public static String dataDirH = dataDir+"/"+"horizontal";
+   public static String dataDirA = dataDir+"/"+"all";
     private final int SHOW_SENSOR_TEXT = 0x001;
     private final int CANCEL_PROGRESSDIALOG = 0x002;
+    private static final int SHOW_RECORD_TEXT =0x003 ;
     private boolean isStart = false, isRecord = false, isThread = false;
     private int dataX;
     private int countk;
@@ -65,7 +76,7 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
     private ProgressDialog progressDialog;
     private Size framesize;
     private String filename;
-    private VideoRecoder videoRecoder;
+    private VideoRecoderList videoRecoder;
     private Mat[] mats = new Mat[2];
     private int[] sensors = new int[2];
     private Filtering xFlitering = new Filtering(3);
@@ -85,6 +96,9 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                     progressDialog.dismiss();
                     progressDialog = null;
                     Toast.makeText(MainActivityCv4.this, filename + "已保存", Toast.LENGTH_LONG).show();
+                    break;
+                case SHOW_RECORD_TEXT:
+                    recodeTv.setText("已写入"+videoRecoder.getSize());
                 default:
 
             }
@@ -105,9 +119,11 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
     };
     private int dataY;
 
- private FloatingActionButton btn_menu;
  private    PopupMenu popupMenu;
-
+    private ImageButton btn_record,btn_show,btn_switch;
+    private  TextView recodeTv;
+    private Chronometer chronometer;
+    private CoordinatorLayout coordinatorLayout;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -116,15 +132,7 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         setContentView(R.layout.main);
 
 
-      btn_menu= (FloatingActionButton) findViewById(R.id.float_menu);
-        btn_menu.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //openOptionsMenu();
-                     onPopupButtonClick(view);
-                Log.d("Act","FloatActionButton OnClick");
-            }
-        });
+
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
@@ -167,64 +175,34 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         }
         popupMenu.show();
     }
-//    @Override
-//    public void openOptionsMenu() {
-//        final View toolbar = getWindow().getDecorView().findViewById(R.id.action_bar);
-//        if (toolbar instanceof Toolbar) {
-//            ((Toolbar)toolbar).showOverflowMenu();
-//        } else {
-//            super.openOptionsMenu();
-//        }
-//
-//    }
-//
-//    @Override
-//    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-//        super.onCreateContextMenu(menu, v, menuInfo);
-//    }
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        menu.add(0, 100, 0, "查看-图片");
-//        menu.add(0, 300, 0, "展示");
-//        menu.add(0, 200, 0, "查看-视频");
-//        menu.add(0, 400, 0, "横屏录制");
-//
-//        return super.onCreateOptionsMenu(menu);
-//    }
-//
-//    @Override
-//    public boolean onOptionsItemSelected(MenuItem item) {
-//
-//        switch (item.getItemId()) {
-//            case 100:
-//                showFilesDialog(this, dataDir, "list", ListAct.class);
-//                break;
-//            case 200:
-//                showFilesDialog(this, dataDir, "", VideoAct1.class);
-//                break;
-//            case 300:
-//                showFilesDialog(this, dataDir, "", ShowActivity.class);
-//                break;
-//            case  400:
-//                startActivity(new Intent(this,MainActivityCv4Land.class));
-//                finish();
-//                break;
-//        }
-//        return true;
-//    }
+
     private void init() {
         sensorTv = (TextView) findViewById(R.id.sensor_text);
-        startBtn = (Button) findViewById(R.id.start_btn);
-
-        startBtn.setOnClickListener(this);
-
-        buttonOnclick = new ButtonOnclick(new Button[]{startBtn});
+        recodeTv= (TextView) findViewById(R.id.tv_show_record);
+        btn_record= (ImageButton) findViewById(R.id.imgbtn_record);
+        btn_switch= (ImageButton) findViewById(R.id.imgbtn_switch);
+        btn_show= (ImageButton) findViewById(R.id.imgbtn_show);
+        chronometer= (Chronometer) findViewById(R.id.chronometer_record);
+        coordinatorLayout= (CoordinatorLayout) findViewById(R.id.coordinator);
+        chronometer.setVisibility(View.GONE);
+        recodeTv.setVisibility(View.GONE);
+        buttonOnclick = new ButtonOnclick(new ImageButton[]{btn_record,btn_show,btn_switch});
+        btn_record.setOnClickListener(this);
+        btn_switch.setOnClickListener(this);
+        btn_show.setOnClickListener(this);
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 2);
         }
         File file = new File(dataDir);
-        if (!file.exists()) file.mkdir();
+        File file1=new File(dataDirV);
+        File file2=new File(dataDirH);
+        File file3=new File(dataDirA);
+        File[] files=new File[]{file,file1,file2,file3};
+        for (File temp:files)
+        {
+            if (!temp.exists()) temp.mkdir();
+        }
 
     }
 
@@ -287,12 +265,17 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         Mat mat=inputFrame.rgba();
         if (isStart) {
             if (isRecord && videoRecoder.isOpened()) {
-                if (videoRecoder.getType()== VideoReader.TYPE_HORIZONTAL)
-                videoRecoder.write(mat, dataX);
-                else  if (videoRecoder.getType()==VideoReader.TYPE_VERCICAL)
-                videoRecoder.write(mat, dataY);
-                else  if (videoRecoder.getType()==VideoReader.TYPE_UNKNOW)
-                videoRecoder.write(mat, dataX,dataY);
+                if (videoRecoder.getType()== VideoReader.TYPE_HORIZONTAL) {
+                    videoRecoder.write(mat, dataX);
+                }
+                else  if (videoRecoder.getType()==VideoReader.TYPE_VERCICAL) {
+                    videoRecoder.write(mat, dataY);
+                }
+                else  if (videoRecoder.getType()==VideoReader.TYPE_UNKNOW) {
+                    videoRecoder.write(mat,dataX,dataY);
+                }
+                handler.sendEmptyMessage(SHOW_RECORD_TEXT);
+
             }
             isRecord = false;
         }
@@ -358,25 +341,21 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
     public void onClick(View view) {
         int position = buttonOnclick.getPosition(view.getId());
         switch (view.getId()) {
-            case R.id.start_btn:
+            case R.id.imgbtn_record:
                 if (isStart) {
-
-                    buttonOnclick.OnclickStop(position, getResources().getString(R.string.btn_name1), Color.argb(0, 0, 0, 0));
+                    buttonOnclick.OnclickStop(position);
                 } else {
-                    buttonOnclick.OnclickStart(position, getResources().getString(R.string.btn_name1), getResources().getColor(R.color.colorA), VideoReader.TYPE_UNKNOW);
+                    buttonOnclick.OnclickStart(position,VideoReader.TYPE_UNKNOW);
 
                 }
                 break;
-            case R.id.show_btn:
-                if (isStart) {
-                    buttonOnclick.OnclickStop(position, getResources().getString(R.string.btn_name2), Color.argb(0, 0, 0, 0));
-
-
-                } else {
-                    buttonOnclick.OnclickStart(position, getResources().getString(R.string.btn_name2),getResources().getColor(R.color.colorA), VideoReader.TYPE_UNKNOW);
-
-                }
+            case R.id.imgbtn_show:
+                startActivity(new Intent(this, FileActivity.class));
                 break;
+            case  R.id.imgbtn_switch:
+                startActivity(new Intent(this, MainActivityCv4Land.class));
+                finish();
+               break;
 
         }
     }
@@ -387,9 +366,9 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
      */
     class ButtonOnclick {
 
-        private Button[] buttons;
+        private ImageButton[] buttons;
 
-        public ButtonOnclick(Button[] buttons) {
+        public ButtonOnclick(ImageButton[] buttons) {
             this.buttons = buttons;
         }
 
@@ -397,25 +376,28 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
          * 开始录制视频
          *
          * @param position 按钮在数组的位置
-         * @param text     按钮要设置的文本
-         * @param color    按钮要设置的颜色
+         *
          * @param type     录制视频的类型  361横向  -361 纵向
          */
-        public void OnclickStart(int position, String text, int color, int type) {
+        public void OnclickStart(int position,int type) {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd_HH:mm:ss");
             String currentDateandTime = sdf.format(new Date());
-            filename = dataDir + "/" + currentDateandTime + ".avi";
+            filename =currentDateandTime;
             videoRecoder = new VideoRecoderList(MainActivityCv4.this, type, filename, VideoWriter.fourcc('M', 'J', 'P', 'G'), 18, framesize);
-            buttons[position].setText(text);
-            buttons[position].setBackgroundColor(color);
+            buttons[position].setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            buttons[position].setImageResource(R.drawable.square_red);
 
-            for (Button button : buttons) {
+            for (ImageButton button : buttons) {
                 if (button != buttons[position]) {
-                    button.setClickable(false);
-                    button.setBackgroundColor(Color.DKGRAY);
+                    button.setVisibility(View.GONE);
                 }
             }
+            recodeTv.setVisibility(View.VISIBLE);
+            chronometer.setVisibility(View.VISIBLE);
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.start();
             isStart = true;
+
 
         }
 
@@ -423,21 +405,20 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
          * 停止录制视频
          *
          * @param position 按钮在数组的位置
-         * @param text     按钮要设置的文本
-         * @param color    按钮要设置的颜色
+         *
          */
-        public void OnclickStop(int position, String text, int color) {
+        public void OnclickStop(int position) {
             isStart = false;
-            videoRecoder.saveToSdcard();
+            videoRecoder.saveToSdcard(coordinatorLayout);
             videoRecoder = null;
-            buttons[position].setText(text);
-            buttons[position].setBackgroundColor(color);
-            for (Button button : buttons) {
-
-                button.setClickable(true);
-                button.setBackgroundColor(getResources().getColor(R.color.colorTouMing));
-
+            buttons[position].setScaleType(ImageView.ScaleType.CENTER);
+            buttons[position].setImageResource(R.drawable.circle_red);
+            for (ImageButton button : buttons) {
+                button.setVisibility(View.VISIBLE);
             }
+            recodeTv.setVisibility(View.GONE);
+            chronometer.setVisibility(View.GONE);
+            chronometer.stop();
         }
 
         /**
@@ -459,38 +440,5 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
 
     }
 
-//    private class RecoderWorker implements Runnable {
-//
-//        @Override
-//        public void run() {
-//            do {
-//                boolean hasFrame = false;
-//                synchronized (MainActivity2.this) {
-//                    try {
-//                        while (!mCameraFrameReady && !mStopThread) {
-//                            MainActivity2.this.wait();
-//                        }
-//                    } catch (InterruptedException e) {
-//                        e.printStackTrace();
-//                    }
-//                    if (mCameraFrameReady) {
-//                        mChainIdx = 1 - mChainIdx;
-//                        mCameraFrameReady = false;
-//                        hasFrame = true;
-//                    }
-//                }
-//
-//                if (!mStopThread && hasFrame) {
-//                    if (!mats[1 - mChainIdx].empty() && !videoRecoder.contains(sensors[1 - mChainIdx]))
-//
-//                    {
-//                        videoRecoder.write(mats[1 - mChainIdx], sensors[1 - mChainIdx]);
-//                        mats[1 - mChainIdx].release();
-//                    }
-//
-//                }
-//            } while (!mStopThread);
-//            Log.d(TAG, "Finish processing thread");
-//        }
-//    }
+
 }

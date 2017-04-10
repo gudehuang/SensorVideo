@@ -1,0 +1,47 @@
+//JavaCameraView 工作活动图
+@startuml
+|摄像头|
+
+|JavaCameraView|
+start
+
+:连接Opencv库;
+:JavaCarmeView初始化;
+:初始化摄像头，设定摄像头参数;
+
+fork
+
+
+while(Camera 连接中？)is (连接)
+|摄像头|
+ :onPreviewFrame(byte[] data, Camera camera);
+  |JavaCameraView|
+ :获取图像数据;
+if(请求对象锁) then(成功)
+:获取对象锁;
+:由图像数据生成Mat,唤醒等待线程;
+:释放对象锁;
+else(失败)
+endif
+endwhile(断开)
+fork again
+
+while(Camera 连接中？)is (连接)
+if(请求对象锁) then(成功)
+:获取对象锁;
+if(是否有缓存Mat?)then(yes)
+:绘制图像;
+else(no)
+:进入等待状态，等待唤醒;
+endif
+
+
+
+:释放对象锁;
+endif
+endwhile
+end fork
+
+:预览结束;
+stop
+@enduml

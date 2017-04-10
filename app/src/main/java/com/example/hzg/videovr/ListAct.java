@@ -66,7 +66,6 @@ public class ListAct extends AppCompatActivity {
             public void run() {
                 if (type.equals("list"))
                videoReader=new VideoReaderList(dataPath);
-                else  videoReader=new VideoReaderSet(dataPath);
                 handler.sendEmptyMessage(CANCELL_DIALOG);
             }
         }).start();

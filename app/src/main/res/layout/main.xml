@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:weightSum="1">
+    >
 
     <com.example.hzg.videovr.MyCameraView
         android:id="@+id/javacameraview"
@@ -16,46 +16,93 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true" />
 
+    <TextView
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:text=""
+        android:textSize="18dp"
+        android:background="@color/colorTouMing"
+        android:textColor="@color/colorAccent"
+        android:id="@+id/tv_show_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
+    <Chronometer
+        android:textColor="@color/colorRed"
+        android:textSize="18dp"
+        android:id="@+id/chronometer_record"
+        android:layout_marginRight="28dp"
+        android:layout_toStartOf="@id/tv_show_record"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
     <LinearLayout
         android:id="@+id/linearlayout"
-        android:layout_alignParentBottom="true"
+
         android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true">
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#646464"/>
         <TextView
             android:textColor="@color/colorPrimary"
             android:background="#00000000"
             android:id="@+id/sensor_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-        <LinearLayout
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#646464"/>
+        <android.support.design.widget.CoordinatorLayout
+            android:id="@+id/coordinator"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"></android.support.design.widget.CoordinatorLayout>
+        <RelativeLayout
 
             android:orientation="horizontal"
             android:background="@color/colorTouMing"
             android:id="@+id/btn_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            <Button
-                android:layout_gravity="center"
-                android:text="@string/btn_name1"
-                android:id="@+id/start_btn"
-                android:textStyle="bold"
-                android:textColor="@color/colorPrimary"
-                style="@style/btnStyle" />
 
-        </LinearLayout>
+
+
+            <ImageButton
+                style="@style/imgBtn"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
+                android:id="@+id/imgbtn_record"
+                android:layout_marginLeft="28dp"
+                android:layout_marginRight="28dp"
+                android:layout_centerInParent="true"
+                android:src="@drawable/circle_red"
+                android:scaleType="center"
+                />
+            <ImageButton
+
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:id="@+id/imgbtn_switch"
+                style="@style/imgBtn"
+                android:src="@android:drawable/ic_menu_always_landscape_portrait"
+                android:layout_alignBottom="@+id/imgbtn_record"
+                android:layout_toEndOf="@+id/imgbtn_record" />
+            <ImageButton
+                android:id="@+id/imgbtn_show"
+                style="@style/imgBtn"
+               android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@android:drawable/ic_menu_view"
+                android:layout_alignBottom="@+id/imgbtn_record"
+                android:layout_toStartOf="@+id/imgbtn_record" />
+
+        </RelativeLayout>
 
     </LinearLayout>
-<android.support.design.widget.FloatingActionButton
-    android:id="@+id/float_menu"
-    opencv:backgroundTint="@color/colorFlo"
-    android:layout_above="@id/linearlayout"
-    android:src="@android:drawable/ic_menu_manage"
-    opencv:rippleColor="@color/colorAccent"
-    android:layout_marginTop="100dp"
-    android:layout_marginRight="16dp"
-    android:layout_alignParentRight="true"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content" />
+
 
 </RelativeLayout>

@@ -43,5 +43,6 @@ public interface VideoRecoder {
      * @return
      */
     int getType();
+    int getSize();
 
 }
