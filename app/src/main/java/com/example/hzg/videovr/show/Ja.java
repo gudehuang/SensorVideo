@@ -5,4 +5,5 @@ package com.example.hzg.videovr.show;
  */
 
 public class Ja {
+    private  int i=0;
 }
