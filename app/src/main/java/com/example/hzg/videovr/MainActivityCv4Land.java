@@ -96,7 +96,7 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
                     Toast.makeText(MainActivityCv4Land.this, filename + "已保存", Toast.LENGTH_LONG).show();
                     break;
                 case SHOW_RECORD_TEXT:
-                    if (videoRecoder.isOpened())
+                    if (videoRecoder!=null&&videoRecoder.isOpened())
                     recodeTv.setText("已写入"+videoRecoder.getSize());
                 default:
 
@@ -330,8 +330,8 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
                 }
                 break;
             case R.id.imgbtn_show:
-                //startActivity(new Intent(this, FileActivity.class));
-                myUtils.showFilesDialog(this,dataDirV,"",ListAct.class);
+                startActivity(new Intent(this, FileActivity.class));
+
                 break;
             case  R.id.imgbtn_switch:
                 startActivity(new Intent(this, MainActivityCv4.class));

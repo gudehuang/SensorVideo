@@ -1,39 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.hzg.videovr">
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
 
-    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.autofocus"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera.front.autofocus"
+        android:required="false" />
 
-    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
-    <uses-feature android:name="android.hardware.camera.front.autofocus" android:required="false"/>
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <application
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:icon="@drawable/icon"
+        android:label= "@string/app_name"
+        android:roundIcon="@drawable/icon"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ListAct"/>
-
+        <activity android:name=".ListAct" />
         <activity android:name=".StartAct">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".VideoAct1"/>
-        <activity android:name=".MainActivityCv4"
-            android:screenOrientation="portrait"/>
-        <activity android:name=".MainActivityCv4Land"
-            android:screenOrientation="landscape"/>
-        <activity android:name=".show.FileActivity"/>
-        <activity android:name=".show.MainActivity"
-            android:screenOrientation="landscape"/>
+        <activity android:name=".VideoAct1" />
+        <activity
+            android:name=".MainActivityCv4"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".MainActivityCv4Land"
+            android:screenOrientation="landscape" />
+        <activity android:name=".show.FileActivity" />
+        <activity
+            android:name=".show.ShowActivity"
+            android:screenOrientation="landscape" />
     </application>
 
 </manifest>

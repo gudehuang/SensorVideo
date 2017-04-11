@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">videoVr</string>
+    <string name="app_name">SVV</string>
     <string name="btn_name1">录制</string>
     <string name="btn_name2">录制(纵向)</string>
     <string name="btn_selected">录制中</string>

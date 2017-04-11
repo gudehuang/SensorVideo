@@ -39,15 +39,14 @@ public class VideoRecoderList implements  VideoRecoder {
     private AlertDialog.Builder builder;
     private  int type=VideoReader.TYPE_UNKNOW;
     private  int orientation=ORIENTATION_VERTICAL;
-
 public VideoRecoderList( Context context,int type,String filename,int fourcc,double fps, Size framesize)
 {
     mContext=context;
+    absoluteFilename=MainActivityCv4.dataDir+"/"+filename+".avi";
     if (framesize.width>framesize.height) {
         orientation = ORIENTATION_HORIZONTAL;
-        absoluteFilename=MainActivityCv4.dataDirH+"/"+filename+".avi";
     }
-    else  absoluteFilename=MainActivityCv4.dataDirA+"/"+filename+".avi";
+
     videoWriter=new VideoWriter(absoluteFilename,fourcc,fps, framesize);
     sensorList=new ArrayList<>();
     sensorListY=new ArrayList<>();
@@ -122,11 +121,24 @@ public VideoRecoderList( Context context,int type,String filename,int fourcc,dou
         sensorList.add(type);
         if (sensorList.size()>20) {
             videoWriter.release();
-            if (orientation==ORIENTATION_HORIZONTAL)
+            if (orientation==ORIENTATION_VERTICAL)
+            {   File oldfile=new File(absoluteFilename);
+                absoluteFilename=MainActivityCv4.dataDirA+"/"+filename+".avi";
+                File newFile=new File(absoluteFilename);
+                oldfile.renameTo(newFile);
+            }
+            else if (orientation==ORIENTATION_HORIZONTAL)
             {
                 if (type==VideoReader.TYPE_VERCICAL) {
                     File oldfile=new File(absoluteFilename);
                     absoluteFilename = MainActivityCv4.dataDirV + "/" + filename + ".avi";
+                    File newFile=new File(absoluteFilename);
+                    oldfile.renameTo(newFile);
+                }
+                else
+                {
+                    File oldfile=new File(absoluteFilename);
+                    absoluteFilename = MainActivityCv4.dataDirH+ "/" + filename + ".avi";
                     File newFile=new File(absoluteFilename);
                     oldfile.renameTo(newFile);
                 }

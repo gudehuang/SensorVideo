@@ -1,15 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-<item android:title="图片"
-    android:id="@+id/menu_photo"
+<item android:title="删除"
+    android:id="@+id/menu_delete"
 
     />
-<item android:title="展示"
-    android:id="@+id/menu_vr"
-    />
-<item android:title="视频"
-    android:id="@+id/menu_video"/>
-<item android:title="转屏"
-    android:id="@+id/menu_land"/>
+
 </menu>

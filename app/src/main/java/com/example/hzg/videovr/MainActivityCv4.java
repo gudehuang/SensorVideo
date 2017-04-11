@@ -99,7 +99,8 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                     Toast.makeText(MainActivityCv4.this, filename + "已保存", Toast.LENGTH_LONG).show();
                     break;
                 case SHOW_RECORD_TEXT:
-                    recodeTv.setText("已写入"+videoRecoder.getSize());
+                    if (videoRecoder!=null&&videoRecoder.isOpened())
+                        recodeTv.setText("已写入"+videoRecoder.getSize());
                 default:
 
             }
@@ -131,16 +132,14 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.main);
 
-
-
-
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
         }
+        init();
         cameraview = (CameraBridgeViewBase) findViewById(R.id.javacameraview);
         cameraview.setVisibility(SurfaceView.VISIBLE);
         cameraview.setCvCameraViewListener(this);
-        init();
+
         Log.d("Activity","UI Thread:"+Thread.currentThread());
     }
 
@@ -162,15 +161,7 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 2);
         }
-        File file = new File(dataDir);
-        File file1=new File(dataDirV);
-        File file2=new File(dataDirH);
-        File file3=new File(dataDirA);
-        File[] files=new File[]{file,file1,file2,file3};
-        for (File temp:files)
-        {
-            if (!temp.exists()) temp.mkdir();
-        }
+
 
     }
 
@@ -178,8 +169,24 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == 1) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 2);
+                }
+
             } else {
                 finish();
+            }
+        }
+        else  if (requestCode==2)
+        {
+            File file = new File(dataDir);
+            File file1=new File(dataDirV);
+            File file2=new File(dataDirH);
+            File file3=new File(dataDirA);
+            File[] files=new File[]{file,file1,file2,file3};
+            for (File temp:files)
+            {
+                if (!temp.exists()) temp.mkdir();
             }
         }
     }
@@ -321,8 +328,8 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                 }
                 break;
             case R.id.imgbtn_show:
-                //startActivity(new Intent(this, FileActivity.class));
-               myUtils.showFilesDialog(this,dataDirA,"",ListAct.class);
+                startActivity(new Intent(this, FileActivity.class));
+
                 break;
             case  R.id.imgbtn_switch:
                 startActivity(new Intent(this, MainActivityCv4Land.class));

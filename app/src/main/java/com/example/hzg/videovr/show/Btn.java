@@ -1,6 +1,7 @@
 package com.example.hzg.videovr.show;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -22,21 +23,23 @@ public class Btn {
      *
      */
     private Paint mPaint ;
-    private Bitmap back, commonmode, vrmode ,newvrmode;
+    private Bitmap back, commonmode, vrmode ,splitmode;
     private int bx, by;
     private int btnx, btny;
     private int circlex , circley ;
     private int showtime = 3 ;
+    private Context context ;
 
     public Btn(int w , int h, Context context) {
+        this.context = context ;
         back = BitmapFactory.decodeResource(context.getResources(), R.drawable.back);
         back = Bitmap.createScaledBitmap(back, 75, 75, false);
         commonmode = BitmapFactory.decodeResource(context.getResources(), R.drawable.commonmode);
         commonmode = Bitmap.createScaledBitmap(commonmode, 100, 100, false);
         vrmode = BitmapFactory.decodeResource(context.getResources(), R.drawable.vrmode);
         vrmode = Bitmap.createScaledBitmap(vrmode, 100, 100, false);
-        newvrmode = BitmapFactory.decodeResource(context.getResources(), R.drawable.newvrmode);
-        newvrmode = Bitmap.createScaledBitmap(newvrmode, 100, 100, false);
+        splitmode = BitmapFactory.decodeResource(context.getResources(), R.drawable.splitmode);
+        splitmode = Bitmap.createScaledBitmap(splitmode, 100, 100, false);
         bx = w / 40;
         by = w / 40;
         btnx = w - commonmode.getWidth() - 10;
@@ -57,7 +60,7 @@ public class Btn {
             else if (MySurfaceView2.style%3 == MySurfaceView2.VR)
                 canvas.drawBitmap(vrmode, btnx, btny, null);
             else
-                canvas.drawBitmap(newvrmode, btnx, btny, null);
+                canvas.drawBitmap(splitmode, btnx, btny, null);
         }
     }
 
@@ -85,14 +88,13 @@ public class Btn {
             @Override
             public void run() {
                 try {
-                    Thread.sleep(4000);
+                    Thread.sleep(showtime*1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 MySurfaceView2.ShowBtn = false ;
             }
         }).start();
-
     }
 }
 

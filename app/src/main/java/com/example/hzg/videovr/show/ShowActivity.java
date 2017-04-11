@@ -2,7 +2,9 @@ package com.example.hzg.videovr.show;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -11,13 +13,20 @@ import android.hardware.SensorManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.hzg.videovr.R;
@@ -40,18 +49,20 @@ import org.opencv.videoio.Videoio;
 import java.io.FileInputStream;
 import java.io.ObjectInputStream;
 import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
 
-public class MainActivity extends Activity
-        implements SensorEventListener , DProcessedEventListener {
+public class ShowActivity extends Activity
+        implements SensorEventListener , DProcessedEventListener  {
 
-    private static final String TAG = "MainActivity";
+    private static final String TAG = "ShowActivity";
     private Bitmap bitmap;
     private SensorManager sensorManager;
     private float gravity = 0, pitchangle = 0;
     private int courseangle = 0;
     private int initialangle ;
     public static int screenwidth;
-    private ProgressBar progressBar;
+//    private ProgressBar progressBar;
     private FrameLayout root;
     private Context context;
     private String Path;
@@ -63,7 +74,39 @@ public class MainActivity extends Activity
     private Filtering fFiltering = new Filtering(3);
     private int fangle =0 ;
     private VideoReaderForVideo videoReaderForVideo ;
-
+    private RelativeLayout btn_layout ;
+    private Button back , style ;
+    private TextView styletext ;
+    private boolean showbtn = false ;
+    private int showtime = 3 ;
+    private boolean run = true ;
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            if (msg.what == 0x123) {
+                back.setBackgroundColor(Color.argb(0, 0, 0, 0));
+                style.setBackgroundColor(Color.argb(0, 0, 0, 0));
+                styletext.setText("");
+                back.setClickable(false);
+                style.setClickable(false);
+            } else if (msg.what == 0x456) {
+                back.setClickable(true);
+                style.setClickable(true);
+                back.setBackgroundResource(R.drawable.back);
+                if (MySurfaceView2.style % 3 == MySurfaceView2.VR) {
+                    style.setBackgroundResource(R.drawable.vrmode);
+                    styletext.setText("VR模式");
+                } else if (MySurfaceView2.style % 3 == MySurfaceView2.COMMON) {
+                    style.setBackgroundResource(R.drawable.commonmode);
+                    styletext.setText("普通模式模式");
+                } else {
+                    styletext.setText("分屏模式");
+                    style.setBackgroundResource(R.drawable.splitmode);
+                }
+            }
+        }
+    };
+  private  boolean isFristLoad=false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -72,31 +115,22 @@ public class MainActivity extends Activity
         //全屏
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_main);
+//        btn_layout = (RelativeLayout) findViewById(R.id.btn_layout);
+//        style = (Button) findViewById(R.id.style);
+//        back = (Button) findViewById(R.id.back);
         Path = getIntent().getStringExtra("Path");
-        progressBar = (ProgressBar) findViewById(R.id.progressbar);
+//        progressBar = (ProgressBar) findViewById(R.id.progressbar);
         mDProcessedSensorType = DProcessedSensor.TYPE_3D_COMPASS ;
         root = (FrameLayout) findViewById(R.id.root);
         context = this;
-        Log.i(TAG, "Trying to load OpenCV library");
-        if (!OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, context, mLoaderCallback)) {
-            Log.e(TAG, "Cannot connect to OpenCV Manager");
-        } else {
-            Log.i(TAG, "connect to OpenCV Manager ");
-        }
-        sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
-                sensorManager.SENSOR_DELAY_GAME);
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY),
-                sensorManager.SENSOR_DELAY_GAME);
+
 
     }
 
     class PictureTask extends AsyncTask<Void, Integer, Boolean> {
 
         protected void onPreExecute() {
-            progressBar.setProgress(0); // 显示进度对话框
+//            progressBar.setProgress(0); // 显示进度对话框
         }
 
         @Override
@@ -113,51 +147,116 @@ public class MainActivity extends Activity
 
         @Override
         protected void onPostExecute(Boolean result) {
-            progressBar.setVisibility(View.GONE); // 关闭进度对话框
+//            progressBar.setVisibility(View.GONE); // 关闭进度对话框
             final MySurfaceView2 mySurfaceView2 = new MySurfaceView2(context);
             root.addView(mySurfaceView2);
+            addView();
             new Thread(new Runnable() {
                 @Override
                 public void run() {
                     switch (videoReaderForVideo.getType()) {
                         case VideoReader.TYPE_360:
-                            while (true) {
+                            while (run) {
                                 Mat mat = SearchMat(courseangle);
                                 Utils.matToBitmap(mat, bitmap);
-                                mySurfaceView2.show(bitmap, pitchangle, gravity, courseangle);
+                                mySurfaceView2.show(bitmap, pitchangle, gravity);
                             }
                         case VideoReader.TYPE_HORIZONTAL:
-                            int i = 0 ;
-                            int min = 0 , max = 0 , length = 0  ;
-                            initialangle = courseangle ;
-                            length = videoReaderForVideo.getLength();
-                            min = initialangle ;
-                            max = initialangle + length ;
-                            while (true) {
-                                if (max > 360 && courseangle<min)
-                                    courseangle += 360;
-                                if (courseangle < min)
-                                    i = 0;
-                                else if (courseangle > max)
-                                    i = length - 1;
-                                else
-                                    i = courseangle - min;
-                                videoReaderForVideo.readMat(i, mat);
-                                Log.i("MAT", String.valueOf(i));
-                                Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGB);
+                            while (run) {
+                                Mat mat = SearchMat(courseangle);
                                 Utils.matToBitmap(mat, bitmap);
-                                mySurfaceView2.show(bitmap);
+                                mySurfaceView2.show(bitmap, courseangle);
                             }
-                            case VideoReader.TYPE_VERCICAL:
-                                while (true) {
-                                    Mat mat = SearchMat(fangle);
-                                    Utils.matToBitmap(mat, bitmap);
-                                    mySurfaceView2.show(bitmap);
-                                }
+                        case VideoReader.TYPE_VERCICAL:
+                            while (run) {
+                                if (gravity>0)
+                                    pitchangle = -pitchangle ;
+                                Mat mat = SearchMat((int) pitchangle);
+                                Utils.matToBitmap(mat, bitmap);
+                                mySurfaceView2.show(bitmap, (int) pitchangle);
+                            }
                     }
                 }
             }).start();
         }
+    }
+
+    private void addView() {
+        btn_layout = new RelativeLayout(context);
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        btn_layout.setLayoutParams(params);
+        back = new Button(context);
+        style = new Button(context);
+        styletext = new TextView(context);
+        RelativeLayout.LayoutParams params1 = new RelativeLayout.LayoutParams(140,140);
+        params.setMargins(20,20,0,0);
+        back.setLayoutParams(params1);
+        back.setBackgroundColor(Color.argb(0,0,0,0));
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                run = false ;
+
+                finish();
+            }
+        });
+        btn_layout.addView(back);
+        params1 = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
+        params1.setMargins(180,0,0,0);
+        styletext.setLayoutParams(params1);
+        styletext.setTextColor(Color.RED);
+        styletext.setTextSize(30);
+        styletext.setText("");
+        btn_layout.addView(styletext);
+        params1 = new RelativeLayout.LayoutParams(100,100);
+        params1.setMargins(0,0,20,0);
+        params1.addRule(RelativeLayout.CENTER_VERTICAL);
+        params1.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        style.setBackgroundColor(Color.argb(0,0,0,0));
+        style.setLayoutParams(params1);
+        style.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MySurfaceView2.style = ++MySurfaceView2.style%3;
+                if (MySurfaceView2.style  == MySurfaceView2.VR) {
+                    style.setBackgroundResource(R.drawable.vrmode);
+                    styletext.setText("VR模式");
+                } else if (MySurfaceView2.style  == MySurfaceView2.COMMON) {
+                    style.setBackgroundResource(R.drawable.commonmode);
+                    styletext.setText("普通模式模式");
+                } else {
+                    styletext.setText("分屏模式");
+                    style.setBackgroundResource(R.drawable.splitmode);
+                }
+            }
+        });
+        btn_layout.addView(style);
+        btn_layout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (showbtn) {
+                    showbtn = false;
+                    handler.sendEmptyMessage(0x123);
+                } else {
+                    showbtn = true;
+                    handler.sendEmptyMessage(0x456);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                Thread.sleep(showtime * 1000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            showbtn = false;
+                            handler.sendEmptyMessage(0x123);
+                        }
+                    }).start();
+                }
+            }
+        });
+        root.addView(btn_layout);
     }
 
     private void handleVideo() {
@@ -201,14 +300,34 @@ public class MainActivity extends Activity
     @Override
     protected void onResume() {
         super.onResume();
-        DSensorManager.startDProcessedSensor(this, mDProcessedSensorType, this);
+        DSensorManager.startDProcessedSensor(this, mDProcessedSensorType,SensorManager.SENSOR_DELAY_GAME, this);
+        sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION),
+                sensorManager.SENSOR_DELAY_GAME);
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY),
+                sensorManager.SENSOR_DELAY_GAME);
+        if (!OpenCVLoader.initDebug()) {
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, mLoaderCallback);
+        } else {
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
     }
 
     @Override
     protected void onPause() {
         DSensorManager.stopDSensor();
-
+         sensorManager.unregisterListener(this);
         super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        videoReaderForVideo.release();
+
+
     }
 
     private BaseLoaderCallback mLoaderCallback = new BaseLoaderCallback(this) {
@@ -217,7 +336,11 @@ public class MainActivity extends Activity
             switch (status) {
                 case LoaderCallbackInterface.SUCCESS: {
                     Log.i(TAG, "OpenCV loaded successfully");
-                    new PictureTask().execute();
+                    if (!isFristLoad)
+                    {
+                        new PictureTask().execute();
+                        isFristLoad=true;
+                    }
                 }
                 break;
                 default: {
@@ -272,4 +395,5 @@ public class MainActivity extends Activity
             }
         }
     }
+
 }

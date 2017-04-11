@@ -45,7 +45,9 @@ public class VideoReaderForVideo implements VideoReader {
  }
     @Override
     public int getSensor(int position) {
+        if (sensorList!=null)
         return sensorList.get(position);
+        else  return  -370;
     }
     @Override
     public Mat getMat(int position) {
@@ -104,5 +106,6 @@ public class VideoReaderForVideo implements VideoReader {
             sensorList.clear();
             sensorList=null;
         }
+        mContext=null;
     }
 }
