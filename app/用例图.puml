@@ -1,0 +1,18 @@
+@startuml
+actor  用户 as user
+rectangle 系统{
+usecase 录制            as u1
+usecase  记录传感器信息 as u11
+usecase  记录图像信息   as u12
+
+usecase 播放             as u2
+usecase  读取数据   as u21
+usecase  获取手机当前传感器信息 as u22
+u1 -.up-> u11 :include
+u1 -.up-> u12 :include
+u2 -.up->u21 :include
+u2 -.up->u22 : include
+}
+user -down-> u1
+user -left-> u2
+@enduml

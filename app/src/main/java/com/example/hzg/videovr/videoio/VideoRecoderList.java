@@ -31,7 +31,6 @@ public class VideoRecoderList implements  VideoRecoder {
     private VideoWriter videoWriter;
     static  int ORIENTATION_VERTICAL=0x001;
     static  int ORIENTATION_HORIZONTAL=0x002;
-
     private ArrayList<Integer> sensorList;
     private ArrayList<Integer> sensorListY;
     private  String filename;
@@ -193,6 +192,9 @@ public VideoRecoderList( Context context,int type,String filename,int fourcc,dou
 
     @Override
     public boolean contains(int sensor) {
+        if (type==VideoReader.TYPE_VERCICAL)
+            return sensorListY.contains(sensor);
+            else
         return sensorList.contains(sensor);
     }
     public boolean contains(int sensor,int sensorY) {

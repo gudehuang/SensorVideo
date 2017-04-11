@@ -19,6 +19,9 @@ import android.widget.TextView;
 import com.example.hzg.videovr.videoio.VideoReader;
 import com.example.hzg.videovr.videoio.VideoReaderList;
 
+import org.opencv.android.BaseLoaderCallback;
+import org.opencv.android.LoaderCallbackInterface;
+import org.opencv.android.OpenCVLoader;
 import org.opencv.android.Utils;
 import org.opencv.core.Mat;
 
@@ -40,6 +43,7 @@ public class ListAct extends AppCompatActivity {
             switch (msg.what)
             {
                 case CANCELL_DIALOG:
+                    if (proDialog!=null)
                     proDialog.dismiss();
                     proDialog=null;
                     adapter.setVideoReader(videoReader);
@@ -48,7 +52,25 @@ public class ListAct extends AppCompatActivity {
         }
     };
     private String type;
-
+    private BaseLoaderCallback baseLoaderCallback = new BaseLoaderCallback(this) {
+        @Override
+        public void onManagerConnected(int status) {
+            switch (status) {
+                case BaseLoaderCallback.SUCCESS:
+                    if (videoReader==null)
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                                videoReader=new VideoReaderList(dataPath);
+                            handler.sendEmptyMessage(CANCELL_DIALOG);
+                        }
+                    }).start();
+                    break;
+                default:
+                    super.onManagerConnected(status);
+            }
+        }
+    };
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,18 +83,22 @@ public class ListAct extends AppCompatActivity {
         }
         setContentView(R.layout.list);
         recyclerView = (RecyclerView) findViewById(R.id.list_image);
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (type.equals("list"))
-               videoReader=new VideoReaderList(dataPath);
-                handler.sendEmptyMessage(CANCELL_DIALOG);
-            }
-        }).start();
+
         adapter = new ImageAdapter(videoReader);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
         proDialog=ProgressDialog.show(this,"正在从视频获取数据","数据处理中，请稍等、、、、",false,false);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (!OpenCVLoader.initDebug()) {
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, baseLoaderCallback);
+        } else {
+            baseLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+
+        }
     }
 
     class ImageViewHolder extends RecyclerView.ViewHolder {

@@ -32,8 +32,14 @@ import android.widget.Toast;
 
 import com.example.hzg.videovr.show.FileActivity;
 import com.example.hzg.videovr.utils.Filtering;
+import com.example.hzg.videovr.utils.myUtils;
 import com.example.hzg.videovr.videoio.VideoReader;
 import com.example.hzg.videovr.videoio.VideoRecoderList;
+import com.hoan.dsensor_master.DProcessedSensor;
+import com.hoan.dsensor_master.DSensor;
+import com.hoan.dsensor_master.DSensorEvent;
+import com.hoan.dsensor_master.DSensorManager;
+import com.hoan.dsensor_master.interfaces.DProcessedEventListener;
 
 import org.opencv.android.BaseLoaderCallback;
 import org.opencv.android.CameraBridgeViewBase;
@@ -50,7 +56,7 @@ import java.util.Date;
 import static com.example.hzg.videovr.utils.myUtils.showFilesDialog;
 
 public class MainActivityCv4Land extends AppCompatActivity implements CameraBridgeViewBase.CvCameraViewListener2
-        , SensorEventListener, View.OnClickListener {
+        , SensorEventListener, View.OnClickListener, DProcessedEventListener {
 
     private CameraBridgeViewBase cameraview;
     private String TAG = "ShowActivity";
@@ -111,10 +117,15 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
         }
     };
     private int dataY;
+    private  float dataG;
     private ImageButton btn_record,btn_show,btn_switch;
     private  TextView recodeTv;
     private Chronometer chronometer;
     private CoordinatorLayout coordinatorLayout;
+    private int courseangle;
+    private int pitchangle;
+    private int mDProcessedSensorType= DProcessedSensor.TYPE_3D_COMPASS ;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -189,7 +200,8 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
     protected void onResume() {
         super.onResume();
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ORIENTATION), SensorManager.SENSOR_DELAY_UI);
-
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY), SensorManager.SENSOR_DELAY_UI);
+        DSensorManager.startDProcessedSensor(this, mDProcessedSensorType,SensorManager.SENSOR_DELAY_UI, this);
         if (!OpenCVLoader.initDebug()) {
             OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_2_0, this, baseLoaderCallback);
         } else {
@@ -226,16 +238,18 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
         Mat mat=inputFrame.rgba();
         if (isStart) {
             if (isRecord && videoRecoder.isOpened()) {
-                if (videoRecoder.getType()== VideoReader.TYPE_HORIZONTAL) {
+                if (videoRecoder.getType()== VideoReader.TYPE_HORIZONTAL&&!videoRecoder.contains(dataX)) {
                     videoRecoder.write(mat, dataX);
+                    handler.sendEmptyMessage(SHOW_RECORD_TEXT);
                 }
-                else  if (videoRecoder.getType()==VideoReader.TYPE_VERCICAL) {
+                else  if (videoRecoder.getType()==VideoReader.TYPE_VERCICAL&&!videoRecoder.contains(dataY)) {
                     videoRecoder.write(mat, dataY);
+                    handler.sendEmptyMessage(SHOW_RECORD_TEXT);
                 }
-                else  if (videoRecoder.getType()==VideoReader.TYPE_UNKNOW) {
+                else  if (videoRecoder.getType()==VideoReader.TYPE_UNKNOW&&!videoRecoder.contains(dataX,dataY)) {
                     videoRecoder.write(mat,dataX,dataY);
+                    handler.sendEmptyMessage(SHOW_RECORD_TEXT);
                 }
-                handler.sendEmptyMessage(SHOW_RECORD_TEXT);
 
             }
             isRecord = false;
@@ -249,21 +263,22 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
     public void onSensorChanged(SensorEvent sensorEvent) {
         switch (sensorEvent.sensor.getType()) {
             case Sensor.TYPE_ORIENTATION:
-                xFlitering.put(sensorEvent.values[0]);
                 yFlitering.put(sensorEvent.values[1]);
                 zFlitering.put(sensorEvent.values[2]);
                 Message message = Message.obtain();
                 message.what = SHOW_SENSOR_TEXT;
                 sensorEvent.values[0] = xFlitering.getResult();
                 sensorEvent.values[1] = yFlitering.getResult();
+                if (dataG<=0)
                 sensorEvent.values[2] = zFlitering.getResult();
+                else  sensorEvent.values[2] = -zFlitering.getResult();
                 message.obj = sensorEvent.values;
                 handler.sendMessage(message);
                 int x = 0;
                 int y=0;
                 if (isStart) {
                     x = (int) sensorEvent.values[0];
-                    y = (int) sensorEvent.values[1];
+                    y = (int) (sensorEvent.values[2]);
 
                     if (!isRecord ) {
                         if (videoRecoder.getType()==VideoReader.TYPE_UNKNOW&&!videoRecoder.contains(x,y)) {
@@ -287,6 +302,10 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
                         Log.d("sensor", "get sensor :" + countk++);
                     }
                 }
+                break;
+            case Sensor.TYPE_GRAVITY:
+                  dataG=sensorEvent.values[2];
+                break;
 
         }
     }
@@ -311,13 +330,31 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
                 }
                 break;
             case R.id.imgbtn_show:
-                startActivity(new Intent(this, FileActivity.class));
+                //startActivity(new Intent(this, FileActivity.class));
+                myUtils.showFilesDialog(this,dataDirV,"",ListAct.class);
                 break;
             case  R.id.imgbtn_switch:
                 startActivity(new Intent(this, MainActivityCv4.class));
                 finish();
                break;
 
+        }
+    }
+
+    @Override
+    public void onProcessedValueChanged(DSensorEvent dSensorEvent) {
+        if (dSensorEvent.sensorType == DSensor.TYPE_DEPRECIATED_ORIENTATION) {
+
+        } else {
+            if (Float.isNaN(dSensorEvent.values[0])) {
+
+            } else {
+                int valueInDegree = (int) Math.round(Math.toDegrees(dSensorEvent.values[0]));
+                if (valueInDegree < 0)
+                    valueInDegree = (valueInDegree + 360) % 360;
+                    xFlitering.put(valueInDegree);
+
+            }
         }
     }
 

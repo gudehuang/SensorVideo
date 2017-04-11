@@ -233,16 +233,19 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         Mat mat=inputFrame.rgba();
         if (isStart) {
             if (isRecord && videoRecoder.isOpened()) {
-                if (videoRecoder.getType()== VideoReader.TYPE_HORIZONTAL) {
+                if (videoRecoder.getType()== VideoReader.TYPE_HORIZONTAL&&!videoRecoder.contains(dataX)) {
                     videoRecoder.write(mat, dataX);
+                    handler.sendEmptyMessage(SHOW_RECORD_TEXT);
                 }
-                else  if (videoRecoder.getType()==VideoReader.TYPE_VERCICAL) {
+                else  if (videoRecoder.getType()==VideoReader.TYPE_VERCICAL&&!videoRecoder.contains(dataY)) {
                     videoRecoder.write(mat, dataY);
+                    handler.sendEmptyMessage(SHOW_RECORD_TEXT);
                 }
-                else  if (videoRecoder.getType()==VideoReader.TYPE_UNKNOW) {
+                else  if (videoRecoder.getType()==VideoReader.TYPE_UNKNOW&&!videoRecoder.contains(dataX,dataY)) {
                     videoRecoder.write(mat,dataX,dataY);
+                    handler.sendEmptyMessage(SHOW_RECORD_TEXT);
                 }
-                handler.sendEmptyMessage(SHOW_RECORD_TEXT);
+
 
             }
             isRecord = false;
@@ -318,8 +321,8 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                 }
                 break;
             case R.id.imgbtn_show:
-                startActivity(new Intent(this, FileActivity.class));
-               // myUtils.showFilesDialog(this,dataDirA,"",VideoAct1.class);
+                //startActivity(new Intent(this, FileActivity.class));
+               myUtils.showFilesDialog(this,dataDirA,"",ListAct.class);
                 break;
             case  R.id.imgbtn_switch:
                 startActivity(new Intent(this, MainActivityCv4Land.class));

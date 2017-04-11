@@ -1,0 +1,38 @@
+@startuml
+package "CameraBridgeViewBase "{
+abstract class CameraBridgeViewBase  {
+... 必须实现的抽象方法 ...
+{abstract} boolean connectCamera(int width, int height)
+ {abstract} void disconnectCamera()
+--  重要的可重写的方法         --
+# void  deliverAndDrawFrame(CvCameraViewFrame frame)
+#  protected Size calculateCameraFrameSize
+(List<?> supportedSizes, ListItemAccessor accessor, int surfaceWidth, int surfaceHeight)
+==重要的接口==
+interface CvCameraViewListener
+interface CvCameraViewFrame
+
+
+
+}
+
+interface CvCameraViewListener{
+ void onCameraViewStarted(int width, int height);
+  void onCameraViewStopped();
+  Mat onCameraFrame(Mat inputFrame);
+ }
+interface CvCameraViewFrame {
+         public Mat rgba();
+
+         public Mat gray();
+     }
+      CvCameraViewListener +-up-- CameraBridgeViewBase
+      CvCameraViewFrame +-up-- CameraBridgeViewBase
+ }
+class SurfaceView {
+}
+interface SurfaceHolder.Callback{
+}
+CameraBridgeViewBase -up-|>SurfaceView
+CameraBridgeViewBase .up.|>SurfaceHolder.Callback
+@enduml

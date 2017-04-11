@@ -1,0 +1,16 @@
+@startuml
+
+
+ interface VideoRecoder {
+
+    void write(Mat mat,int sensor);
+    void write(Mat mat,int sensor,int sensorY);
+    void saveToSdcard();
+    boolean isOpened();
+    boolean contains(int sensor);
+    boolean contains(int sensor,int sensorY);
+    int getType();
+    int getSize();
+}
+
+@enduml
