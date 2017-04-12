@@ -4,15 +4,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.media.MediaMetadataRetriever;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -36,12 +32,27 @@ import java.util.ArrayList;
  * Created by william on 2017/4/11.
  */
 
-public class HorizontalFragment extends Fragment {
+public class FileFragment extends android.support.v4.app.Fragment {
 
     private RecyclerView myRecyclerView;
     ArrayList<File> filelist = new ArrayList<>();
     RecyclerView.LayoutManager layoutManager;
     MyAdapter myAdapter;
+    private String dataDir;
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        dataDir=getArguments().getString("dataDir");
+    }
+
+    public static FileFragment create (String dataDir)
+   {
+        FileFragment fileFragment =new FileFragment();
+       Bundle bundle=new Bundle();
+       bundle.putString("dataDir",dataDir);
+       fileFragment.setArguments(bundle);
+       return fileFragment;
+   }
 
     @Nullable
     @Override
@@ -142,12 +153,14 @@ public class HorizontalFragment extends Fragment {
     }
 
     private void getData() {
-        String filePath = Environment.getExternalStorageDirectory().getPath() + "/360video" + "/horizontal";
-        File parentFile = new File(filePath);
+        File parentFile = new File(dataDir);
         File[] files = parentFile.listFiles();
         for (File file : files) {
             if (file.getName().endsWith(".avi")) {
+                //判断传感器文件是否存在,不存在则删除视频文件
+                if (new File(file.getPath()+".vr").exists())
                 filelist.add(file);
+                else  file.delete();
             }
         }
         Log.i("SIZE", String.valueOf(filelist.size()));

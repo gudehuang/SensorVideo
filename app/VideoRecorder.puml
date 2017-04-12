@@ -2,13 +2,16 @@
 
 
  interface VideoRecoder {
-
+  --写入函数 --
     void write(Mat mat,int sensor);
     void write(Mat mat,int sensor,int sensorY);
-    void saveToSdcard();
-    boolean isOpened();
+... 判断是否包含传感器信息 ...
     boolean contains(int sensor);
     boolean contains(int sensor,int sensorY);
+==结束录制,数据保存函数==
+    void saveToSdcard();
+...其它辅助函数 ...
+    boolean isOpened();
     int getType();
     int getSize();
 }

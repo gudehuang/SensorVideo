@@ -1,0 +1,22 @@
+@startuml
+
+|VideoRecorder|
+start
+:VideoRecorder创建;
+while(停止记录?) is(否)
+|外部|
+:使用getType()获取录制类型;
+:根据录制类型获取
+传感器数据和图像数据;
+|VideoRecorder|
+    if(使用contains()判断是否写入?)then (yes )
+    :使用isOpened()检测ideoRecorder的状态;
+    :使用write()写入数据;
+    else (no)
+    endif
+endwhile(是)
+:使用saveToSdcard()保存数据;
+:VideoRecorder销毁;
+stop
+
+@enduml

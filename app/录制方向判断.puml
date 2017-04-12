@@ -1,0 +1,38 @@
+@startuml
+:初始方向为未知;
+:判断写入函数为contains(Mat,x,y)
+写入函数为write(Mat.x,y);
+partition write(Mat,x,y) {
+:Mat数据使用VideoWrite写入;
+:x用sensorListX存储
+ y用sensorListY存储;
+:sensorListX的初值与末值相差20时判定录制方向为横向,
+sensorListY的初值与末值相差20时判定录制方向为纵向;
+}
+if(录制方向为横向)then (yes)
+:判断写入函数为contains(Mat,x)
+写入函数为write(Mat.x);
+partition write(Mat,x) {
+:Mat数据使用VideoWrite写入
+x用sensorListX存储;
+}
+else (no)
+:判断写入函数为contains(Mat,int)
+写入函数为write(Mat.y);
+partition write(Mat,y) {
+:Mat数据使用VideoWrite写入
+y用sensorListY存储;
+}
+endif
+partition saveToSdcard() {
+if(录制方向为横向?) then(yes)
+:将录制方向写入sensorListX的末尾,
+通过序列化保存在对应目录;
+else (no)
+:将录制方向写入sensorListY的末尾,
+通过序列化保存在对应目录;
+endif
+:VideoWrite调用release()方法,保存视频文件;
+}
+
+@enduml

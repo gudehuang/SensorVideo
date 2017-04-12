@@ -1,0 +1,17 @@
+@startuml
+
+class VideoRecorderList{
+- VideoWriter videoWriter
+- ArrayList<Integer> sensorListX
+- ArrayList<Integer> sensorListY
+void write(Mat mat,int sensor)
+void write(Mat mat,int sensorX,int sensorY)
+boolean contains(int sensor)
+boolean contains(int sensorX,int sensorY)
+void saveToSdcard()
+int getType()
+int getSize()
+boolean isOpened()
+}
+VideoRecorderList .up.|> interface VideoRecorder
+@enduml

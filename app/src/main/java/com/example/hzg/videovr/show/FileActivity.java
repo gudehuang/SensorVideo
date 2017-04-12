@@ -2,13 +2,13 @@ package com.example.hzg.videovr.show;
 
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
+import com.example.hzg.videovr.MainActivityCv4;
 import com.example.hzg.videovr.R;
 
 import org.opencv.android.BaseLoaderCallback;
@@ -21,12 +21,12 @@ import java.util.List;
 public class FileActivity extends AppCompatActivity {
 
     private static final String TAG = "File";
-    private PanoramaFragment panoramaFragment ;
-    private HorizontalFragment horizontalFragment ;
-    private VerticalFragment verticalFragment ;
+    private FileFragment panoramaFileFragment;
+    private FileFragment horizontalFileFragment;
+    private FileFragment verticalFileFragment;
     private ViewPager mViewPager;
     private ViewPagerAdapter viewpageradapter;
-    private List<Fragment> fragmentlist;
+    private List<android.support.v4.app.Fragment> fragmentlist;
     private TabLayout mTablayout ;
     private TabLayout.Tab panorama ;
     private TabLayout.Tab horizontal ;
@@ -44,12 +44,12 @@ public class FileActivity extends AppCompatActivity {
     }
 
     private void getFragmentData() {
-        panoramaFragment = new PanoramaFragment() ;
-        horizontalFragment = new HorizontalFragment() ;
-        verticalFragment = new VerticalFragment();
-        fragmentlist.add(panoramaFragment);
-        fragmentlist.add(horizontalFragment);
-        fragmentlist.add(verticalFragment);
+        panoramaFileFragment = FileFragment.create(MainActivityCv4.dataDirA);
+        horizontalFileFragment = FileFragment.create(MainActivityCv4.dataDirH) ;
+        verticalFileFragment = FileFragment.create(MainActivityCv4.dataDirV);
+        fragmentlist.add(panoramaFileFragment);
+        fragmentlist.add(horizontalFileFragment);
+        fragmentlist.add(verticalFileFragment);
     }
 
     @Override
@@ -71,8 +71,8 @@ public class FileActivity extends AppCompatActivity {
         private String[] mTitles = new String[]{"全景", "水平", "垂直"};
 
         @Override
-        public Fragment getItem(int position) {
-            Fragment fragment = fragmentlist.get(position);
+        public android.support.v4.app.Fragment getItem(int position) {
+            android.support.v4.app.Fragment fragment = fragmentlist.get(position);
             return fragment;
         }
 
