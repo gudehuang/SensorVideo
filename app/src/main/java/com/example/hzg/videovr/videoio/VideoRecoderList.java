@@ -46,7 +46,6 @@ public VideoRecoderList( Context context,int type,String filename,int fourcc,dou
     if (framesize.width>framesize.height) {
         orientation = ORIENTATION_HORIZONTAL;
     }
-
     videoWriter=new VideoWriter(absoluteFilename,fourcc,fps, framesize);
     sensorList=new ArrayList<>();
     sensorListY=new ArrayList<>();
@@ -64,9 +63,9 @@ public VideoRecoderList( Context context,int type,String filename,int fourcc,dou
         videoWriter.write(mat);
         sensorList.add(sensor);
         sensorListY.add(sensorY);
-        if (Math.abs(sensor-sensorList.get(0))>20)
+        if (Math.abs(sensor-sensorList.get(0))>10)
             type=VideoReader.TYPE_HORIZONTAL;
-        if (Math.abs(sensorY-sensorListY.get(0))>20)
+        if (Math.abs(sensorY-sensorListY.get(0))>10)
             type=VideoReader.TYPE_VERCICAL;
     }
 
@@ -120,6 +119,11 @@ public VideoRecoderList( Context context,int type,String filename,int fourcc,dou
         if (type==VideoReader.TYPE_VERCICAL)sensorList=sensorListY;
         sensorList.add(type);
         if (sensorList.size()>20) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             videoWriter.release();
             if (orientation==ORIENTATION_VERTICAL)
             {   File oldfile=new File(absoluteFilename);
@@ -225,5 +229,13 @@ public VideoRecoderList( Context context,int type,String filename,int fourcc,dou
             i=sensorListY.size();
         else  i=sensorList.size();
         return i;
+    }
+
+    @Override
+    public void release() {
+        sensorListY=null;
+        sensorList=null;
+        videoWriter=null;
+        builder=null;
     }
 }

@@ -196,8 +196,6 @@ public class ShowActivity extends Activity
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                run = false ;
-
                 finish();
             }
         });
@@ -324,9 +322,13 @@ public class ShowActivity extends Activity
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        run = false ;
+        context=null;
+        MySurfaceView2.finish();
+        root=null;
+        DSensorManager.release();
         videoReaderForVideo.release();
-
+        super.onDestroy();
 
     }
 

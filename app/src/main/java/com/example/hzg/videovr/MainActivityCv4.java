@@ -218,7 +218,10 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
         if (cameraview != null) {
             cameraview.disableView();
         }
+        if (videoRecoder!=null)
+            videoRecoder.release();
         videoRecoder = null;
+        baseLoaderCallback=null;
         Log.d(TAG,"onDestroy");
     }
 

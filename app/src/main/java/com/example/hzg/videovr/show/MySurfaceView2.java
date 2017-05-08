@@ -169,7 +169,7 @@ public class MySurfaceView2 extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     public static void finish() {
-
+context=null;
     }
 }
 

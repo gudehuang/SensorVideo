@@ -217,6 +217,7 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
             cameraview.disableView();
         }
         videoRecoder = null;
+        DSensorManager.release();
         Log.d(TAG,"onDestroy");
     }
 
@@ -352,7 +353,8 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
                 int valueInDegree = (int) Math.round(Math.toDegrees(dSensorEvent.values[0]));
                 if (valueInDegree < 0)
                     valueInDegree = (valueInDegree + 360) % 360;
-                    xFlitering.put(valueInDegree);
+
+                xFlitering.put(valueInDegree);
 
             }
         }

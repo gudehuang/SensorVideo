@@ -308,11 +308,13 @@ public class MyCameraView extends CameraBridgeViewBase implements PreviewCallbac
 
         int maxAllowedWidth =dm.heightPixels;
         int maxAllowedHeight =dm.widthPixels ;
+        float ratio=(float) maxAllowedHeight/maxAllowedWidth;
+        System.out.println(ratio);
         System.out.println("max:"+maxAllowedWidth+"*"+maxAllowedWidth);
         for (Object size : supportedSizes) {
             int width = accessor.getWidth(size);
             int height = accessor.getHeight(size);
-            if (width < maxAllowedWidth && height <maxAllowedHeight&&(float)height/width==9.0/16)
+            if (width < maxAllowedWidth && height <maxAllowedHeight&&(float)height/width==ratio)
             {
                 if (width >= calcWidth && height >= calcHeight) {
                     calcWidth = (int) width;

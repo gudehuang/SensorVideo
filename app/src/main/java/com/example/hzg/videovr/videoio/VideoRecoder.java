@@ -44,5 +44,5 @@ public interface VideoRecoder {
      */
     int getType();
     int getSize();
-
+    void release();
 }

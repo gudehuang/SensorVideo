@@ -7,6 +7,7 @@ import android.hardware.Camera;
 import android.hardware.Camera.PreviewCallback;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.ViewGroup.LayoutParams;
 
@@ -331,17 +332,18 @@ public class JavaCameraViewH extends CameraBridgeViewBase implements PreviewCall
     protected Size calculateCameraFrameSize(List<?> supportedSizes, ListItemAccessor accessor, int surfaceWidth, int surfaceHeight) {
         int calcWidth = 0;
         int calcHeight = 0;
+        DisplayMetrics dm = getResources().getDisplayMetrics();
 
-        int maxAllowedWidth = (mMaxWidth != -1 && mMaxWidth < surfaceWidth)? mMaxWidth : surfaceWidth;
-        int maxAllowedHeight = (mMaxHeight != -1 && mMaxHeight < surfaceHeight)? mMaxHeight : surfaceHeight;
-
+        int maxAllowedWidth =dm.widthPixels;
+        int maxAllowedHeight =dm.heightPixels ;
+        float ratio=(float) maxAllowedWidth/maxAllowedHeight;
         for (Object size : supportedSizes) {
             int width = accessor.getWidth(size);
             int height = accessor.getHeight(size);
             System.out.println(width+"*"+height);
             if (width <= maxAllowedWidth && height <= maxAllowedHeight)
             {
-                if (width >= calcWidth && height >= calcHeight&&(float)height/width==0.75) {
+                if (width >= calcWidth && height >= calcHeight&&(float)width/height==ratio) {
                     calcWidth = (int) width;
                     calcHeight = (int) height;
                 }

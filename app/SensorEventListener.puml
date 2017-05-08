@@ -1,0 +1,8 @@
+@startuml
+
+interface SensorEventListener{
+ void onSensorChanged(SensorEvent sensorEvent)
+ void onAccuracyChanged(Sensor sensor, int i)
+}
+
+@enduml
