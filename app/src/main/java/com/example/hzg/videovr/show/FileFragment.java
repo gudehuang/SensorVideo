@@ -27,32 +27,33 @@ import org.opencv.videoio.Videoio;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  * Created by william on 2017/4/11.
  */
 
 public class FileFragment extends android.support.v4.app.Fragment {
-
+    HashMap<String, Mat> mThumbnailMap=new HashMap<>();
     private RecyclerView myRecyclerView;
     ArrayList<File> filelist = new ArrayList<>();
     RecyclerView.LayoutManager layoutManager;
     MyAdapter myAdapter;
     private String dataDir;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        dataDir=getArguments().getString("dataDir");
+        dataDir = getArguments().getString("dataDir");
     }
 
-    public static FileFragment create (String dataDir)
-   {
-        FileFragment fileFragment =new FileFragment();
-       Bundle bundle=new Bundle();
-       bundle.putString("dataDir",dataDir);
-       fileFragment.setArguments(bundle);
-       return fileFragment;
-   }
+    public static FileFragment create(String dataDir) {
+        FileFragment fileFragment = new FileFragment();
+        Bundle bundle = new Bundle();
+        bundle.putString("dataDir", dataDir);
+        fileFragment.setArguments(bundle);
+        return fileFragment;
+    }
 
     @Nullable
     @Override
@@ -93,24 +94,24 @@ public class FileFragment extends android.support.v4.app.Fragment {
                 holder.fileimage.setOnLongClickListener(new View.OnLongClickListener() {
                     @Override
                     public boolean onLongClick(View v) {
-                        AlertDialog.Builder builder=new AlertDialog.Builder(v.getContext());
+                        AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
                         builder.setTitle("删除文件");
                         builder.setMessage("确定删除文件？");
                         builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                File file=new File( filelist.get(position).getPath())   ;
-                                File file1=new File( filelist.get(position).getPath()+".vr")   ;
-                                if (file.exists())file.delete();
-                                if (file1.exists())file1.delete();
+                                File file = new File(filelist.get(position).getPath());
+                                File file1 = new File(filelist.get(position).getPath() + ".vr");
+                                if (file.exists()) file.delete();
+                                if (file1.exists()) file1.delete();
                                 filelist.clear();
                                 getData();
                                 myAdapter.notifyDataSetChanged();
                             }
                         });
-                        builder.setNeutralButton("取消",null);
+                        builder.setNeutralButton("取消", null);
                         builder.show();
-                        return  true;
+                        return true;
                     }
                 });
             }
@@ -134,21 +135,28 @@ public class FileFragment extends android.support.v4.app.Fragment {
     }
 
     public Bitmap getThumbnail(String filePath) {
-        Mat mat = new Mat();
-        VideoCapture videoCapture = new VideoCapture(filePath);
-        System.out.println(videoCapture.isOpened());
-        Bitmap bitmap=null;
-        if (videoCapture.isOpened()) {
-           bitmap = Bitmap.createBitmap((int) videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH),
-                    (int) videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT), Bitmap.Config.ARGB_8888);
-            videoCapture.set(Videoio.CAP_PROP_POS_FRAMES, 1);
-            videoCapture.read(mat);
-            Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGB);
+        Mat mat = mThumbnailMap.get(filePath);
+        Bitmap bitmap = null;
+        if (mat == null) {
+            mat=new Mat();
+            VideoCapture videoCapture = new VideoCapture(filePath);
+            System.out.println(videoCapture.isOpened());
+            if (videoCapture.isOpened()) {
+
+                bitmap = Bitmap.createBitmap((int) videoCapture.get(Videoio.CAP_PROP_FRAME_WIDTH),
+                        (int) videoCapture.get(Videoio.CAP_PROP_FRAME_HEIGHT), Bitmap.Config.ARGB_8888);
+                videoCapture.set(Videoio.CAP_PROP_POS_FRAMES, 1);
+                videoCapture.read(mat);
+                mThumbnailMap.put(filePath, mat);
+                Imgproc.cvtColor(mat, mat, Imgproc.COLOR_BGR2RGB);
+                Utils.matToBitmap(mat, bitmap);
+                videoCapture.release();
+            } else bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.readerr);
+        } else {
+            bitmap = Bitmap.createBitmap(mat.width(), mat.height(), Bitmap.Config.ARGB_8888);
             Utils.matToBitmap(mat, bitmap);
         }
-        else  bitmap= BitmapFactory.decodeResource(getResources(),R.drawable.readerr);
-        videoCapture.release();
-        mat.release();
+
         return bitmap;
     }
 
@@ -158,9 +166,9 @@ public class FileFragment extends android.support.v4.app.Fragment {
         for (File file : files) {
             if (file.getName().endsWith(".avi")) {
                 //判断传感器文件是否存在,不存在则删除视频文件
-                if (new File(file.getPath()+".vr").exists())
-                filelist.add(file);
-                else  file.delete();
+                if (new File(file.getPath() + ".vr").exists())
+                    filelist.add(file);
+                else file.delete();
             }
         }
         Log.i("SIZE", String.valueOf(filelist.size()));

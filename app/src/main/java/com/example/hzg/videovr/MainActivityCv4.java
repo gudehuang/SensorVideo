@@ -91,7 +91,6 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                 case SHOW_SENSOR_TEXT:
                     float[] resutlt = (float[]) msg.obj;
                     sensorTv.setText(String.format(sensorTextFomart, resutlt[0], resutlt[1], resutlt[2]));
-                    Log.d("sensor show","time");
                     break;
                 case CANCEL_PROGRESSDIALOG:
                     progressDialog.dismiss();
@@ -304,7 +303,6 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                             isRecord = true;
                         }
 
-                        Log.d("sensor", "get sensor :" + countk++);
                     }
                 }
 

@@ -570,6 +570,12 @@ public class DSensorManager {
             mSensorManager = null;
         }
     }
-
+public  static  void release()
+{
+    mDSensorEventProcessor=null;
+    mSensorThread.quit();
+    mSensorThread=null;
+    mSensorManager=null;
+}
 
 }

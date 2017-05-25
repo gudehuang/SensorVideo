@@ -299,8 +299,6 @@ public class MainActivityCv4Land extends AppCompatActivity implements CameraBrid
                             dataY=y;
                             isRecord = true;
                         }
-
-                        Log.d("sensor", "get sensor :" + countk++);
                     }
                 }
                 break;
