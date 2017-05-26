@@ -35,6 +35,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.hzg.videovr.show.FileActivity;
+import com.example.hzg.videovr.show.FileActivity1;
 import com.example.hzg.videovr.utils.Filtering;
 import com.example.hzg.videovr.utils.myUtils;
 import com.example.hzg.videovr.videoio.VideoReader;
@@ -329,7 +330,7 @@ public class MainActivityCv4 extends AppCompatActivity implements CameraBridgeVi
                 }
                 break;
             case R.id.imgbtn_show:
-                startActivity(new Intent(this, FileActivity.class));
+                startActivity(new Intent(this, FileActivity1.class));
 
                 break;
             case  R.id.imgbtn_switch:

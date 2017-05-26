@@ -42,6 +42,7 @@
             android:name=".MainActivityCv4Land"
             android:screenOrientation="landscape" />
         <activity android:name=".show.FileActivity" />
+        <activity android:name=".show.FileActivity1"/>
         <activity
             android:name=".show.ShowActivity"
             android:screenOrientation="landscape" />
